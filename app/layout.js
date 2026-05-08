@@ -5,17 +5,20 @@ const geist = Geist({ subsets: ['latin'] });
 
 export const metadata = {
   title: 'Celebra',
-  description: 'Regalos grupales para cumpleaños',
+  description: 'Regalos que unen',
+  icons: {
+    icon: '/og-image.jpg',
+  },
   openGraph: {
-    title: 'Celebra',
-    description: 'Regalos que unen',
+    title: 'Celebra — Regalos que unen',
+    description: 'Organizá regalos grupales para cumpleaños de forma fácil',
     url: 'https://celebra-app.vercel.app',
     siteName: 'Celebra',
     images: [
       {
-        url: 'https://celebra-app.vercel.app/og-image.png',
-        width: 1200,
-        height: 630,
+        url: 'https://celebra-app.vercel.app/og-image.jpg',
+        width: 504,
+        height: 504,
       }
     ],
   },
