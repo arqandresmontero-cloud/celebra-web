@@ -23,13 +23,10 @@ export default function Perfil() {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    setSaving(true);
-    setError('');
-    setSaved(false);
+    setSaving(true); setError(''); setSaved(false);
     try {
       const updated = await api.updateProfile(form);
-      setUser(updated);
-      setSaved(true);
+      setUser(updated); setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       setError(err.message);
@@ -38,49 +35,62 @@ export default function Perfil() {
     }
   };
 
-  if (loading) return <div style={{ minHeight:'100vh', background:'#0f0f0f', display:'flex', alignItems:'center', justifyContent:'center' }}><p style={{ color:'#888' }}>Cargando...</p></div>;
+  if (loading) return <div style={{ minHeight:'100vh', background:'#F0EEFF', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'system-ui, sans-serif' }}><p style={{ color:'#7C3AED' }}>Cargando...</p></div>;
+
+  const ini = user?.name?.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
 
   return (
-    <div style={{ minHeight:'100vh', background:'#0f0f0f', color:'#fff' }}>
-      <div style={{ background:'#1a1a1a', borderBottom:'1px solid #2a2a2a', padding:'16px 24px', display:'flex', alignItems:'center', gap:'16px' }}>
-        <Link href="/dashboard" style={{ color:'#888', textDecoration:'none', fontSize:'20px' }}>←</Link>
-        <h1 style={{ fontSize:'18px', fontWeight:'700' }}>Mi perfil</h1>
+    <div style={{ minHeight:'100vh', background:'#F0EEFF', fontFamily:'system-ui, sans-serif', paddingBottom:'80px' }}>
+      <div style={{ background:'#7C3AED', padding:'48px 24px 40px', textAlign:'center' }}>
+        <h1 style={{ fontSize:'28px', fontWeight:'800', color:'#fff', letterSpacing:'-1px', margin:'0 0 24px' }}>
+          celebra<span style={{ color:'#FFA500' }}>.</span>
+        </h1>
+        <div style={{ width:'72px', height:'72px', borderRadius:'50%', background:'rgba(255,255,255,0.2)', border:'3px solid rgba(255,255,255,0.5)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 12px', fontSize:'24px', fontWeight:'700', color:'#fff' }}>
+          {ini}
+        </div>
+        <p style={{ color:'#fff', fontWeight:'700', fontSize:'18px', margin:'0 0 4px' }}>{user?.name}</p>
+        <p style={{ color:'rgba(255,255,255,0.6)', fontSize:'14px', margin:0 }}>{user?.email}</p>
       </div>
 
-      <div style={{ maxWidth:'600px', margin:'0 auto', padding:'32px 24px' }}>
-        <div style={{ textAlign:'center', marginBottom:'32px' }}>
-          <div style={{ width:'80px', height:'80px', borderRadius:'50%', background:'#FFD70022', border:'3px solid #FFD700', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 12px', fontSize:'28px', fontWeight:'700', color:'#FFD700' }}>
-            {user?.name?.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2)}
-          </div>
-          <p style={{ color:'#888', fontSize:'14px' }}>{user?.email}</p>
-        </div>
+      <div style={{ padding:'24px' }}>
+        <form onSubmit={handleSave}>
+          {error && <div style={{ background:'#FFF0F0', border:'1px solid #ffcccc', borderRadius:'12px', padding:'12px', marginBottom:'16px', color:'#cc0000', fontSize:'14px' }}>{error}</div>}
+          {saved && <div style={{ background:'#F0FFF0', border:'1px solid #ccffcc', borderRadius:'12px', padding:'12px', marginBottom:'16px', color:'#007700', fontSize:'14px' }}>Perfil actualizado ✓</div>}
 
-        <form onSubmit={handleSave} style={{ background:'#1a1a1a', border:'1px solid #2a2a2a', borderRadius:'16px', padding:'24px' }}>
-          {error && <div style={{ background:'#2a1a1a', border:'1px solid #ff4444', borderRadius:'8px', padding:'12px', marginBottom:'16px', color:'#ff6666', fontSize:'14px' }}>{error}</div>}
-          {saved && <div style={{ background:'#1a2a1a', border:'1px solid #44ff44', borderRadius:'8px', padding:'12px', marginBottom:'16px', color:'#66ff66', fontSize:'14px' }}>Perfil actualizado</div>}
+          <div style={{ background:'#fff', borderRadius:'20px', padding:'20px', marginBottom:'16px' }}>
+            <p style={{ fontSize:'12px', fontWeight:'700', color:'#7C3AED', letterSpacing:'1px', textTransform:'uppercase', marginBottom:'16px', marginTop:0 }}>Mis datos</p>
 
-          <div style={{ marginBottom:'16px' }}>
-            <label style={{ display:'block', color:'#888', fontSize:'14px', marginBottom:'6px' }}>Nombre</label>
-            <input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})}
-              style={{ width:'100%', background:'#111', border:'1px solid #333', borderRadius:'8px', padding:'12px', color:'#fff', fontSize:'15px', boxSizing:'border-box' }} />
-          </div>
+            <div style={{ marginBottom:'14px' }}>
+              <label style={{ display:'block', color:'#999', fontSize:'13px', marginBottom:'6px' }}>Nombre</label>
+              <input type="text" value={form.name} onChange={e => setForm({...form, name:e.target.value})}
+                style={{ width:'100%', background:'#F0EEFF', border:'none', borderRadius:'12px', padding:'13px', fontSize:'15px', color:'#1a1a1a', boxSizing:'border-box', outline:'none' }} />
+            </div>
 
-          <div style={{ marginBottom:'24px' }}>
-            <label style={{ display:'block', color:'#888', fontSize:'14px', marginBottom:'6px' }}>Fecha de cumpleaños</label>
-            <input type="date" value={form.birthday} onChange={e => setForm({...form, birthday: e.target.value})}
-              style={{ width:'100%', background:'#111', border:'1px solid #333', borderRadius:'8px', padding:'12px', color:'#fff', fontSize:'15px', boxSizing:'border-box' }} />
+            <div>
+              <label style={{ display:'block', color:'#999', fontSize:'13px', marginBottom:'6px' }}>Fecha de cumpleaños</label>
+              <input type="date" value={form.birthday} onChange={e => setForm({...form, birthday:e.target.value})}
+                style={{ width:'100%', background:'#F0EEFF', border:'none', borderRadius:'12px', padding:'13px', fontSize:'15px', color:'#1a1a1a', boxSizing:'border-box', outline:'none' }} />
+            </div>
           </div>
 
           <button type="submit" disabled={saving}
-            style={{ width:'100%', background:'#FFD700', color:'#000', border:'none', borderRadius:'10px', padding:'14px', fontSize:'16px', fontWeight:'700', cursor: saving?'not-allowed':'pointer', opacity: saving?0.7:1 }}>
+            style={{ width:'100%', background:'#7C3AED', color:'#fff', border:'none', borderRadius:'14px', padding:'16px', fontSize:'16px', fontWeight:'700', cursor: saving?'not-allowed':'pointer', opacity: saving?0.7:1, marginBottom:'12px' }}>
             {saving ? 'Guardando...' : 'Guardar cambios'}
           </button>
         </form>
 
         <button onClick={() => { removeToken(); router.push('/login'); }}
-          style={{ width:'100%', marginTop:'16px', background:'none', border:'1px solid #333', borderRadius:'10px', padding:'14px', fontSize:'15px', color:'#888', cursor:'pointer' }}>
+          style={{ width:'100%', background:'#fff', border:'1px solid #E9D5FF', borderRadius:'14px', padding:'16px', fontSize:'15px', color:'#7C3AED', fontWeight:'600', cursor:'pointer' }}>
           Cerrar sesión
         </button>
+      </div>
+
+      <div style={{ position:'fixed', bottom:0, left:0, right:0, background:'#fff', borderTop:'1px solid #E9D5FF', display:'flex', alignItems:'center', justifyContent:'space-around', padding:'12px 0 20px' }}>
+        <Link href="/dashboard" style={{ textDecoration:'none', textAlign:'center' }}><div style={{ fontSize:'22px' }}>🏠</div><p style={{ fontSize:'11px', color:'#999', margin:'2px 0 0' }}>Inicio</p></Link>
+        <Link href="/eventos" style={{ textDecoration:'none', textAlign:'center' }}><div style={{ fontSize:'22px' }}>📅</div><p style={{ fontSize:'11px', color:'#999', margin:'2px 0 0' }}>Eventos</p></Link>
+        <Link href="/eventos/nuevo" style={{ textDecoration:'none', textAlign:'center' }}><div style={{ width:'48px', height:'48px', background:'#7C3AED', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'-16px auto 0', fontSize:'24px', color:'#fff' }}>+</div></Link>
+        <Link href="/amigos" style={{ textDecoration:'none', textAlign:'center' }}><div style={{ fontSize:'22px' }}>🎂</div><p style={{ fontSize:'11px', color:'#999', margin:'2px 0 0' }}>Cumpleaños</p></Link>
+        <Link href="/perfil" style={{ textDecoration:'none', textAlign:'center' }}><div style={{ fontSize:'22px' }}>👤</div><p style={{ fontSize:'11px', color:'#7C3AED', fontWeight:'600', margin:'2px 0 0' }}>Perfil</p></Link>
       </div>
     </div>
   );
