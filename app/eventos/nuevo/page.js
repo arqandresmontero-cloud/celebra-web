@@ -75,7 +75,7 @@ function NuevoEvento() {
     try {
       const payload = {
         honoree_name: form.honoree_name,
-        birthday_date: form.birthday_date || new Date().toISOString().split('T')[0],
+        birthday_date: tipo === 'individual' ? new Date().toISOString().split('T')[0] : form.birthday_date,
         title: tituloFinal ? tituloFinal + ' de ' + form.honoree_name : 'Regalo de ' + form.honoree_name,
         type: tipo,
         target_amount: tipo === 'individual' ? (individualAmount ? Number(individualAmount) : undefined) : (form.target_amount ? Number(form.target_amount) : undefined),
