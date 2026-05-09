@@ -33,13 +33,14 @@ export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [events, setEvents] = useState([]);
+  const [suggested, setSuggested] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showSheet, setShowSheet] = useState(false);
 
   useEffect(() => {
     if (!getToken()) { router.replace('/login'); return; }
-    Promise.all([api.me(), api.getEvents()])
-      .then(([u, e]) => { setUser(u); setEvents(e); })
+    Promise.all([api.me(), api.getEvents(), api.getSuggestedEvents()])
+      .then(([u, e, s]) => { setUser(u); setEvents(e); setSuggested(s); })
       .catch(() => { removeToken(); router.replace('/login'); })
       .finally(() => setLoading(false));
   }, []);
@@ -51,6 +52,12 @@ export default function Dashboard() {
   );
 
   const sorted = [...events].sort((a, b) => daysUntil(a.birthday_date) - daysUntil(b.birthday_date));
+
+  // Combinar activos y sugeridos ordenados por fecha
+  const allItems = [
+    ...sorted.map(e => ({ ...e, _type: 'active' })),
+    ...suggested.map(s => ({ ...s, _type: 'suggested' })),
+  ].sort((a, b) => daysUntil(a.birthday_date || a.event_date) - daysUntil(b.birthday_date || b.event_date));
 
   return (
     <div style={{ minHeight: '100vh', background: '#F0EEFF', fontFamily: 'system-ui, sans-serif', paddingBottom: '80px' }}>
@@ -86,7 +93,7 @@ export default function Dashboard() {
           Próximos
         </p>
 
-        {sorted.length === 0 ? (
+        {allItems.length === 0 ? (
           <div style={{ background: '#fff', borderRadius: '16px', padding: '32px', textAlign: 'center', border: '1px dashed #DDD6FE' }}>
             <p style={{ color: '#aaa', fontSize: '14px', lineHeight: '1.5', margin: 0 }}>
               Todavía no tenés regalos.<br />Tocá "Crear regalo" para empezar.
@@ -94,7 +101,42 @@ export default function Dashboard() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {sorted.slice(0, 5).map((e) => {
+            {allItems.slice(0, 6).map((item) => {
+              if (item._type === 'suggested') {
+                const days = daysUntil(item.event_date);
+                const date = new Date(item.event_date);
+                const dateStr = date.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
+                return (
+                  <Link key={'s-' + item.id} href={'/circulos/' + item.circle_id} style={{ textDecoration: 'none' }}>
+                    <div style={{ background: '#fff', borderRadius: '16px', border: '1.5px dashed #F97316', overflow: 'hidden', opacity: 0.95 }}>
+                      <div style={{ background: '#FFF4ED', padding: '14px 16px 12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#fff', border: '2px solid rgba(249,115,22,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
+                          🎂
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontWeight: '500', fontSize: '16px', color: '#92400e', margin: '0 0 2px', letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {item.title}
+                          </p>
+                          <p style={{ fontSize: '12px', color: '#F97316', margin: 0 }}>
+                            Sugerido · Pendiente de activar
+                          </p>
+                        </div>
+                        <div style={{ fontSize: '11px', fontWeight: '500', color: '#F97316', background: 'rgba(249,115,22,0.1)', padding: '4px 9px', borderRadius: '8px', whiteSpace: 'nowrap', alignSelf: 'flex-start', flexShrink: 0 }}>
+                          {days === 0 ? 'Hoy' : days === 1 ? 'Mañana' : dateStr}
+                        </div>
+                      </div>
+                      <div style={{ padding: '10px 16px 12px', display: 'flex', justifyContent: 'flex-end' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '500', color: '#F97316' }}>
+                          Tocá para activar el regalo →
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              }
+
+              // Item activo
+              const e = item;
               const days = daysUntil(e.birthday_date);
               const date = new Date(e.birthday_date);
               const dateStr = date.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
@@ -106,7 +148,7 @@ export default function Dashboard() {
               const contributorCount = e.contributor_count || 0;
 
               return (
-                <Link key={e.id} href={'/eventos/' + e.id} style={{ textDecoration: 'none' }}>
+                <Link key={'e-' + e.id} href={'/eventos/' + e.id} style={{ textDecoration: 'none' }}>
                   <div style={{ background: '#fff', borderRadius: '16px', border: '0.5px solid rgba(0,0,0,0.06)', overflow: 'hidden' }}>
                     <div style={{ background: '#F5F3FF', padding: '14px 16px 12px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '0.5px solid #EDE9FE' }}>
                       <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#fff', border: '2px solid rgba(109,40,217,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
@@ -146,9 +188,10 @@ export default function Dashboard() {
                 </Link>
               );
             })}
-            {sorted.length > 5 && (
+
+            {allItems.length > 6 && (
               <Link href="/eventos" style={{ display: 'block', textAlign: 'center', color: '#7C3AED', fontWeight: '500', fontSize: '14px', textDecoration: 'none', padding: '8px 0' }}>
-                Ver todos ({sorted.length}) →
+                Ver todos ({allItems.length}) →
               </Link>
             )}
           </div>
@@ -173,12 +216,8 @@ export default function Dashboard() {
 
       {/* Bottom sheet — Crear regalo */}
       {showSheet && (
-        <div
-          onClick={() => setShowSheet(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(30,10,60,0.45)', zIndex: 100, display: 'flex', alignItems: 'flex-end' }}>
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{ width: '100%', background: '#fff', borderRadius: '24px 24px 0 0', padding: '0 0 40px' }}>
+        <div onClick={() => setShowSheet(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(30,10,60,0.45)', zIndex: 100, display: 'flex', alignItems: 'flex-end' }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', background: '#fff', borderRadius: '24px 24px 0 0', padding: '0 0 40px' }}>
             <div style={{ width: '36px', height: '4px', background: '#E5E7EB', borderRadius: '99px', margin: '12px auto 0' }} />
             <h2 style={{ fontSize: '18px', fontWeight: '500', color: '#1a1a1a', letterSpacing: '-0.02em', textAlign: 'center', padding: '16px 24px 4px' }}>
               ¿Cómo querés regalar?
