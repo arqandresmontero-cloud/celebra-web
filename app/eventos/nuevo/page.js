@@ -46,6 +46,8 @@ function NuevoEvento() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showAmountInput, setShowAmountInput] = useState(false);
+  const [individualAmount, setIndividualAmount] = useState('');
 
   if (!getToken()) { router.replace('/login'); return null; }
 
@@ -76,7 +78,7 @@ function NuevoEvento() {
         birthday_date: form.birthday_date || new Date().toISOString().split('T')[0],
         title: tituloFinal ? tituloFinal + ' de ' + form.honoree_name : 'Regalo de ' + form.honoree_name,
         type: tipo,
-        target_amount: form.target_amount ? Number(form.target_amount) : undefined,
+        target_amount: tipo === 'individual' ? (individualAmount ? Number(individualAmount) : undefined) : (form.target_amount ? Number(form.target_amount) : undefined),
         honoree_phone: form.honoree_phone || undefined,
       };
       const event = await api.createEvent(payload);
@@ -219,10 +221,35 @@ function NuevoEvento() {
             <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>Enviá una tarjeta de regalo de tu marca favorita al instante.</p>
           </div>
 
-          <div onClick={handleSubmit} style={{ background: '#fff', borderRadius: '20px', padding: '20px', border: '2px solid #E9D5FF', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}>
+          <div style={{ background: '#fff', borderRadius: '20px', padding: '20px', border: '2px solid #E9D5FF' }}>
             <div style={{ fontSize: '28px', marginBottom: '8px' }}>💸</div>
             <p style={{ fontWeight: '600', fontSize: '16px', margin: '0 0 4px', color: '#1a1a1a' }}>Monto en efectivo</p>
-            <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>Juntá plata y transferísela cuando quieras.</p>
+            <p style={{ fontSize: '13px', color: '#888', margin: '0 0 14px' }}>Pagá ahora por MercadoPago y listo.</p>
+
+            {!showAmountInput ? (
+              <button onClick={() => setShowAmountInput(true)}
+                style={{ width: '100%', background: '#6B3FD4', color: '#fff', border: 'none', borderRadius: '12px', padding: '13px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}>
+                Elegir monto →
+              </button>
+            ) : (
+              <div>
+                <div style={{ position: 'relative', marginBottom: '12px' }}>
+                  <span style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', color: '#888', fontSize: '16px' }}>$</span>
+                  <input
+                    type="number"
+                    value={individualAmount}
+                    onChange={e => setIndividualAmount(e.target.value)}
+                    placeholder="0"
+                    autoFocus
+                    style={{ ...inputStyle, paddingLeft: '28px' }}
+                  />
+                </div>
+                <button onClick={handleSubmit} disabled={loading || !individualAmount}
+                  style={{ width: '100%', background: loading || !individualAmount ? '#ccc' : '#6B3FD4', color: '#fff', border: 'none', borderRadius: '12px', padding: '13px', fontSize: '15px', fontWeight: '500', cursor: loading || !individualAmount ? 'not-allowed' : 'pointer' }}>
+                  {loading ? 'Creando...' : 'Ir a pagar 🎁'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
