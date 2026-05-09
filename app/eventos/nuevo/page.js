@@ -205,7 +205,7 @@ function NuevoEvento() {
             </div>
             <div style={{ marginBottom: 0 }}>
               <label style={labelStyle}>Teléfono del homenajeado (WhatsApp)</label>
-              <input type="tel" value={form.honoree_phone} onChange={e => setForm({ ...form, honoree_phone: e.target.value })} placeholder="Ej: +5491112345678" style={inputStyle} />
+              <input type="text" value={form.honoree_phone} onChange={e => setForm({ ...form, honoree_phone: e.target.value })} placeholder="Ej: +5491112345678" style={inputStyle} />
               <p style={{ fontSize: '12px', color: '#bbb', margin: '6px 0 0' }}>Opcional. Le avisamos cuando el regalo esté listo.</p>
             </div>
           </div>
@@ -232,7 +232,7 @@ function NuevoEvento() {
           </div>
           <div style={{ marginBottom: 0 }}>
             <label style={labelStyle}>Teléfono (WhatsApp)</label>
-            <input type="tel" value={form.honoree_phone} onChange={e => setForm({ ...form, honoree_phone: e.target.value })} placeholder="Ej: +5491112345678" style={inputStyle} />
+            <input type="text" value={form.honoree_phone} onChange={e => setForm({ ...form, honoree_phone: e.target.value })} placeholder="Ej: +5491112345678" style={inputStyle} />
             <p style={{ fontSize: '12px', color: '#bbb', margin: '6px 0 0' }}>Opcional. Le mandamos el regalo directo por WhatsApp.</p>
           </div>
         </div>
