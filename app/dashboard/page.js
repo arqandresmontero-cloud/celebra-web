@@ -29,10 +29,6 @@ function getEventEmoji(type, title) {
   return '🎂';
 }
 
-function initials(name) {
-  return name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?';
-}
-
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -112,8 +108,6 @@ export default function Dashboard() {
               return (
                 <Link key={e.id} href={'/eventos/' + e.id} style={{ textDecoration: 'none' }}>
                   <div style={{ background: '#fff', borderRadius: '16px', border: '0.5px solid rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-
-                    {/* Card hero */}
                     <div style={{ background: '#F5F3FF', padding: '14px 16px 12px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '0.5px solid #EDE9FE' }}>
                       <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#fff', border: '2px solid rgba(109,40,217,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
                         {emoji}
@@ -130,8 +124,6 @@ export default function Dashboard() {
                         {days === 0 ? 'Hoy' : days === 1 ? 'Mañana' : dateStr}
                       </div>
                     </div>
-
-                    {/* Card body */}
                     {totalGoal > 0 && (
                       <div style={{ padding: '12px 16px 14px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
@@ -154,7 +146,6 @@ export default function Dashboard() {
                 </Link>
               );
             })}
-
             {sorted.length > 5 && (
               <Link href="/eventos" style={{ display: 'block', textAlign: 'center', color: '#7C3AED', fontWeight: '500', fontSize: '14px', textDecoration: 'none', padding: '8px 0' }}>
                 Ver todos ({sorted.length}) →
@@ -170,9 +161,9 @@ export default function Dashboard() {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" strokeWidth="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
           <span style={{ fontSize: '10px', color: '#7C3AED', fontWeight: '500' }}>Inicio</span>
         </Link>
-        <Link href="/eventos" style={{ flex: 1, textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.8"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          <span style={{ fontSize: '10px', color: '#aaa', fontWeight: '500' }}>Actividad</span>
+        <Link href="/circulos" style={{ flex: 1, textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.8"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75"/><path d="M21 21v-2a4 4 0 00-3-3.87"/></svg>
+          <span style={{ fontSize: '10px', color: '#aaa', fontWeight: '500' }}>Círculos</span>
         </Link>
         <Link href="/perfil" style={{ flex: 1, textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
@@ -188,52 +179,35 @@ export default function Dashboard() {
           <div
             onClick={e => e.stopPropagation()}
             style={{ width: '100%', background: '#fff', borderRadius: '24px 24px 0 0', padding: '0 0 40px' }}>
-
-            {/* Handle */}
             <div style={{ width: '36px', height: '4px', background: '#E5E7EB', borderRadius: '99px', margin: '12px auto 0' }} />
-
             <h2 style={{ fontSize: '18px', fontWeight: '500', color: '#1a1a1a', letterSpacing: '-0.02em', textAlign: 'center', padding: '16px 24px 4px' }}>
               ¿Cómo querés regalar?
             </h2>
             <p style={{ fontSize: '13px', color: '#aaa', textAlign: 'center', padding: '0 24px 20px', lineHeight: '1.4', margin: 0 }}>
               Elegí el tipo de regalo y seguimos.
             </p>
-
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '0 16px' }}>
-
-              {/* Grupal */}
               <Link href="/eventos/nuevo?tipo=grupal" style={{ textDecoration: 'none' }}>
                 <div style={{ borderRadius: '16px', border: '1.5px solid #7C3AED', padding: '18px', display: 'flex', alignItems: 'flex-start', gap: '14px', background: '#FAFAFF', cursor: 'pointer' }}>
-                  <div style={{ width: '46px', height: '46px', borderRadius: '14px', background: '#EDE9FE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>
-                    👥
-                  </div>
+                  <div style={{ width: '46px', height: '46px', borderRadius: '14px', background: '#EDE9FE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>👥</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                       <p style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em' }}>Regalo grupal</p>
                       <span style={{ fontSize: '10px', fontWeight: '500', color: '#6D28D9', background: '#EDE9FE', padding: '3px 8px', borderRadius: '6px' }}>Popular</span>
                     </div>
-                    <p style={{ fontSize: '13px', color: '#888', margin: 0, lineHeight: '1.4' }}>
-                      Invitá a otros, junten el dinero y sorprendan juntos.
-                    </p>
+                    <p style={{ fontSize: '13px', color: '#888', margin: 0, lineHeight: '1.4' }}>Invitá a otros, junten el dinero y sorprendan juntos.</p>
                   </div>
                 </div>
               </Link>
-
-              {/* Individual */}
               <Link href="/eventos/nuevo?tipo=individual" style={{ textDecoration: 'none' }}>
                 <div style={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.08)', padding: '18px', display: 'flex', alignItems: 'flex-start', gap: '14px', background: '#fff', cursor: 'pointer' }}>
-                  <div style={{ width: '46px', height: '46px', borderRadius: '14px', background: '#FFF4ED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>
-                    🎁
-                  </div>
+                  <div style={{ width: '46px', height: '46px', borderRadius: '14px', background: '#FFF4ED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>🎁</div>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', margin: '0 0 4px', letterSpacing: '-0.01em' }}>Regalo individual</p>
-                    <p style={{ fontSize: '13px', color: '#888', margin: 0, lineHeight: '1.4' }}>
-                      Elegí una giftcard y enviála al instante.
-                    </p>
+                    <p style={{ fontSize: '13px', color: '#888', margin: 0, lineHeight: '1.4' }}>Elegí una giftcard y enviála al instante.</p>
                   </div>
                 </div>
               </Link>
-
             </div>
           </div>
         </div>
