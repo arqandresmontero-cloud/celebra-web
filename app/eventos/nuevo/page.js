@@ -2,7 +2,7 @@
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { api, getToken } from '@/lib/api';
+import { api, getToken, API_URL } from '@/lib/api';
 
 const TITULOS = [
   { value: 'Cumpleaños', label: '🎂 Cumpleaños' },
@@ -86,7 +86,7 @@ function NuevoEvento() {
       // Si es individual, ir directo al checkout de MercadoPago
       if (tipo === 'individual' && event.collection_id) {
         const token = localStorage.getItem('token');
-        const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/collections/' + event.collection_id + '/checkout', {
+        const res = await fetch(API_URL + '/collections/' + event.collection_id + '/checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
           body: JSON.stringify({ amount: Number(individualAmount) })
