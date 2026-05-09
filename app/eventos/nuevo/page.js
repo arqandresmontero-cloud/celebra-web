@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { api, getToken } from '@/lib/api';
@@ -13,7 +13,15 @@ const TITULOS = [
   { value: 'Otro', label: '✏️ Otro (escribir)' },
 ];
 
-export default function NuevoEvento() {
+export default function NuevoEventoPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F0EEFF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><p style={{ color: '#7C3AED' }}>Cargando...</p></div>}>
+      <NuevoEvento />
+    </Suspense>
+  );
+}
+
+function NuevoEvento() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tipoParam = searchParams.get('tipo') || 'group';
@@ -71,7 +79,6 @@ export default function NuevoEvento() {
   return (
     <div style={{ minHeight: '100vh', background: '#F0EEFF', fontFamily: 'system-ui, sans-serif', paddingBottom: '40px' }}>
 
-      {/* Header */}
       <div style={{ background: '#6B3FD4', padding: '52px 20px 24px', display: 'flex', alignItems: 'center', gap: '14px' }}>
         <Link href="/dashboard" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: '22px', lineHeight: 1 }}>←</Link>
         <div>
@@ -93,41 +100,24 @@ export default function NuevoEvento() {
             </div>
           )}
 
-          {/* Datos del evento */}
           <div style={{ background: '#fff', borderRadius: '20px', padding: '20px', marginBottom: '12px' }}>
             <p style={{ fontSize: '11px', fontWeight: '500', color: '#888', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: '16px', marginTop: 0 }}>
               La celebración
             </p>
 
-            {/* Nombre */}
             <div style={fieldWrap}>
               <label style={labelStyle}>Nombre del homenajeado *</label>
-              <input
-                type="text"
-                value={form.honoree_name}
-                onChange={e => setForm({ ...form, honoree_name: e.target.value })}
-                placeholder="Ej: María"
-                style={inputStyle}
-              />
+              <input type="text" value={form.honoree_name} onChange={e => setForm({ ...form, honoree_name: e.target.value })} placeholder="Ej: María" style={inputStyle} />
             </div>
 
-            {/* Fecha */}
             <div style={fieldWrap}>
               <label style={labelStyle}>Fecha *</label>
-              <input
-                type="date"
-                value={form.birthday_date}
-                onChange={e => setForm({ ...form, birthday_date: e.target.value })}
-                style={inputStyle}
-              />
+              <input type="date" value={form.birthday_date} onChange={e => setForm({ ...form, birthday_date: e.target.value })} style={inputStyle} />
             </div>
 
-            {/* Tipo de celebración — desplegable */}
             <div style={fieldWrap}>
               <label style={labelStyle}>¿Qué se celebra? *</label>
-              <select
-                value={form.tituloOpcion}
-                onChange={e => setForm({ ...form, tituloOpcion: e.target.value, tituloCustom: '' })}
+              <select value={form.tituloOpcion} onChange={e => setForm({ ...form, tituloOpcion: e.target.value, tituloCustom: '' })}
                 style={{ ...inputStyle, color: form.tituloOpcion ? '#1a1a1a' : '#aaa' }}>
                 <option value="" disabled>Seleccioná una opción</option>
                 {TITULOS.map(t => (
@@ -136,61 +126,32 @@ export default function NuevoEvento() {
               </select>
             </div>
 
-            {/* Campo libre si eligió "Otro" */}
             {form.tituloOpcion === 'Otro' && (
               <div style={fieldWrap}>
                 <label style={labelStyle}>¿Cuál? *</label>
-                <input
-                  type="text"
-                  value={form.tituloCustom}
-                  onChange={e => setForm({ ...form, tituloCustom: e.target.value })}
-                  placeholder="Ej: Despedida de soltera"
-                  style={inputStyle}
-                  autoFocus
-                />
+                <input type="text" value={form.tituloCustom} onChange={e => setForm({ ...form, tituloCustom: e.target.value })} placeholder="Ej: Despedida de soltera" style={inputStyle} autoFocus />
               </div>
             )}
 
-            {/* Aporte sugerido */}
             <div style={{ marginBottom: 0 }}>
               <label style={labelStyle}>Aporte sugerido por persona ($)</label>
-              <input
-                type="number"
-                value={form.target_amount}
-                onChange={e => setForm({ ...form, target_amount: e.target.value })}
-                placeholder="Ej: 5000"
-                style={inputStyle}
-              />
-              <p style={{ fontSize: '12px', color: '#bbb', margin: '6px 0 0', paddingLeft: '2px' }}>
-                Opcional. Lo que le pedirías a cada invitado.
-              </p>
+              <input type="number" value={form.target_amount} onChange={e => setForm({ ...form, target_amount: e.target.value })} placeholder="Ej: 5000" style={inputStyle} />
+              <p style={{ fontSize: '12px', color: '#bbb', margin: '6px 0 0', paddingLeft: '2px' }}>Opcional. Lo que le pedirías a cada invitado.</p>
             </div>
           </div>
 
-          {/* Datos del homenajeado */}
           <div style={{ background: '#fff', borderRadius: '20px', padding: '20px', marginBottom: '20px' }}>
             <p style={{ fontSize: '11px', fontWeight: '500', color: '#888', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: '16px', marginTop: 0 }}>
               ¿A quién le llega el regalo?
             </p>
-
             <div style={{ marginBottom: 0 }}>
               <label style={labelStyle}>Teléfono (WhatsApp)</label>
-              <input
-                type="tel"
-                value={form.honoree_phone}
-                onChange={e => setForm({ ...form, honoree_phone: e.target.value })}
-                placeholder="Ej: +5491112345678"
-                style={inputStyle}
-              />
-              <p style={{ fontSize: '12px', color: '#bbb', margin: '6px 0 0', paddingLeft: '2px' }}>
-                Opcional. Le mandamos el regalo por WhatsApp cuando esté listo.
-              </p>
+              <input type="tel" value={form.honoree_phone} onChange={e => setForm({ ...form, honoree_phone: e.target.value })} placeholder="Ej: +5491112345678" style={inputStyle} />
+              <p style={{ fontSize: '12px', color: '#bbb', margin: '6px 0 0', paddingLeft: '2px' }}>Opcional. Le mandamos el regalo por WhatsApp cuando esté listo.</p>
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
+          <button type="submit" disabled={loading}
             style={{ width: '100%', background: '#6B3FD4', color: '#fff', border: 'none', borderRadius: '14px', padding: '16px', fontSize: '16px', fontWeight: '500', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, letterSpacing: '-0.01em' }}>
             {loading ? 'Creando...' : '🎁 Crear regalo'}
           </button>
