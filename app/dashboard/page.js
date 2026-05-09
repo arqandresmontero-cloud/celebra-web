@@ -1,4 +1,5 @@
 'use client';
+import ActivarRegaloSheet from '@/components/ActivarRegaloSheet';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -34,6 +35,7 @@ export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [events, setEvents] = useState([]);
   const [suggested, setSuggested] = useState([]);
+  const [suggestedToActivate, setSuggestedToActivate] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showSheet, setShowSheet] = useState(false);
 
@@ -107,7 +109,7 @@ export default function Dashboard() {
                 const date = new Date(item.event_date);
                 const dateStr = date.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
                 return (
-                  <Link key={'s-' + item.id} href={'/circulos/' + item.circle_id} style={{ textDecoration: 'none' }}>
+                  <div key={'s-' + item.id} onClick={() => setSuggestedToActivate(item)} style={{ cursor: 'pointer' }}>
                     <div style={{ background: '#fff', borderRadius: '16px', border: '1.5px dashed #F97316', overflow: 'hidden', opacity: 0.95 }}>
                       <div style={{ background: '#FFF4ED', padding: '14px 16px 12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#fff', border: '2px solid rgba(249,115,22,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
@@ -131,7 +133,7 @@ export default function Dashboard() {
                         </span>
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 );
               }
 
@@ -252,6 +254,13 @@ export default function Dashboard() {
         </div>
       )}
 
+    </div>
+      {suggestedToActivate && (
+        <ActivarRegaloSheet
+          suggested={suggestedToActivate}
+          onClose={() => setSuggestedToActivate(null)}
+        />
+      )}
     </div>
   );
 }
