@@ -4,19 +4,22 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { api, getToken, removeToken } from '@/lib/api';
 
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
 function formatBirthday(dateStr) {
   if (!dateStr) return 'Sin fecha';
-  const d = new Date(dateStr);
-  return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'long' });
+  const parts = dateStr.split('T')[0].split('-');
+  const mes = MESES[parseInt(parts[1], 10) - 1];
+  const dia = parseInt(parts[2], 10);
+  return `${dia} de ${mes}`;
 }
 
 function daysUntil(dateStr) {
   if (!dateStr) return null;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const d = new Date(dateStr);
-  d.setFullYear(today.getFullYear());
-  d.setHours(0, 0, 0, 0);
+  const parts = dateStr.split('T')[0].split('-');
+  const d = new Date(today.getFullYear(), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
   if (d < today) d.setFullYear(today.getFullYear() + 1);
   return Math.ceil((d - today) / (1000 * 60 * 60 * 24));
 }
@@ -27,10 +30,11 @@ export default function CirculoDetalle() {
   const [circle, setCircle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showAddPerson, setShowAddPerson] = useState(false);
-  const [form, setForm] = useState({ name: '', birthday_date: '', phone: '', note: '', emoji: '🎂' });
+  const [form, setForm] = useState({ name: '', dia: '', mes: '', phone: '', note: '', emoji: '🎂' });
   const [saving, setSaving] = useState(false);
 
   const EMOJIS = ['🎂', '👦', '👧', '👨', '👩', '🧒', '👴', '👵'];
+  const DIAS = Array.from({ length: 31 }, (_, i) => i + 1);
 
   useEffect(() => {
     if (!getToken()) { router.replace('/login'); return; }
@@ -44,10 +48,14 @@ export default function CirculoDetalle() {
     if (!form.name.trim()) return;
     setSaving(true);
     try {
-      const person = await api.addPersonToCircle(id, form);
+      // Armamos fecha como 2000-MM-DD (año fijo, solo importa día/mes)
+      const birthday_date = form.dia && form.mes
+        ? `2000-${String(form.mes).padStart(2, '0')}-${String(form.dia).padStart(2, '0')}`
+        : null;
+      const person = await api.addPersonToCircle(id, { ...form, birthday_date });
       setCircle(prev => ({ ...prev, people: [...(prev.people || []), person] }));
       setShowAddPerson(false);
-      setForm({ name: '', birthday_date: '', phone: '', note: '', emoji: '🎂' });
+      setForm({ name: '', dia: '', mes: '', phone: '', note: '', emoji: '🎂' });
     } catch (e) {
       alert('Error al agregar persona');
     } finally {
@@ -117,19 +125,15 @@ export default function CirculoDetalle() {
 
         {/* Acciones */}
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button
-            onClick={() => setShowAddPerson(true)}
-            style={{ flex: 1, background: '#fff', color: '#5B21B6', border: 'none', borderRadius: '14px', padding: '14px', fontSize: '14px', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+          <button onClick={() => setShowAddPerson(true)} style={{ flex: 1, background: '#fff', color: '#5B21B6', border: 'none', borderRadius: '14px', padding: '14px', fontSize: '14px', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
             🎂 Cargar cumpleaños
           </button>
-          <button
-            onClick={handleInvite}
-            style={{ flex: 1, background: '#25D366', color: '#fff', border: 'none', borderRadius: '14px', padding: '14px', fontSize: '14px', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+          <button onClick={handleInvite} style={{ flex: 1, background: '#25D366', color: '#fff', border: 'none', borderRadius: '14px', padding: '14px', fontSize: '14px', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
             Invitar por WhatsApp
           </button>
         </div>
 
-        {/* Link de invitación */}
+        {/* Link */}
         <div style={{ background: '#fff', borderRadius: '14px', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '0.5px solid rgba(0,0,0,0.06)' }}>
           <div>
             <p style={{ fontSize: '11px', color: '#aaa', margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Link de invitación</p>
@@ -140,12 +144,9 @@ export default function CirculoDetalle() {
           </button>
         </div>
 
-        {/* Personas / cumpleaños */}
+        {/* Cumpleaños */}
         <div>
-          <p style={{ fontSize: '11px', fontWeight: '500', color: '#888', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: '10px' }}>
-            Cumpleaños
-          </p>
-
+          <p style={{ fontSize: '11px', fontWeight: '500', color: '#888', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: '10px' }}>Cumpleaños</p>
           {sortedPeople.length === 0 ? (
             <div style={{ background: '#fff', borderRadius: '16px', padding: '32px', textAlign: 'center', border: '1px dashed #DDD6FE' }}>
               <p style={{ fontSize: '28px', margin: '0 0 10px' }}>🎂</p>
@@ -168,11 +169,9 @@ export default function CirculoDetalle() {
                       <p style={{ fontSize: '12px', color: '#999', margin: 0 }}>{formatBirthday(p.birthday_date)}</p>
                     </div>
                     {days !== null && (
-                      <div style={{ textAlign: 'right' }}>
-                        <span style={{ fontSize: '11px', fontWeight: '600', color: soon ? '#F97316' : '#7C3AED', background: soon ? '#FFF4ED' : '#EDE9FE', padding: '4px 9px', borderRadius: '8px' }}>
-                          {days === 0 ? '¡Hoy! 🎉' : days === 1 ? 'Mañana' : `${days}d`}
-                        </span>
-                      </div>
+                      <span style={{ fontSize: '11px', fontWeight: '600', color: soon ? '#F97316' : '#7C3AED', background: soon ? '#FFF4ED' : '#EDE9FE', padding: '4px 9px', borderRadius: '8px' }}>
+                        {days === 0 ? '¡Hoy! 🎉' : days === 1 ? 'Mañana' : `${days}d`}
+                      </span>
                     )}
                   </div>
                 );
@@ -184,9 +183,7 @@ export default function CirculoDetalle() {
         {/* Miembros */}
         {circle.members?.length > 0 && (
           <div>
-            <p style={{ fontSize: '11px', fontWeight: '500', color: '#888', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: '10px' }}>
-              Miembros
-            </p>
+            <p style={{ fontSize: '11px', fontWeight: '500', color: '#888', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: '10px' }}>Miembros</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {circle.members.map(m => (
                 <div key={m.id} style={{ background: '#fff', borderRadius: '14px', border: '0.5px solid rgba(0,0,0,0.06)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -246,12 +243,22 @@ export default function CirculoDetalle() {
             />
 
             <p style={{ fontSize: '12px', color: '#888', margin: '0 0 6px' }}>Fecha de cumpleaños</p>
-            <input
-              type="date"
-              value={form.birthday_date}
-              onChange={e => setForm({ ...form, birthday_date: e.target.value })}
-              style={{ width: '100%', border: '1.5px solid #e5e7eb', borderRadius: '12px', padding: '12px 14px', fontSize: '15px', marginBottom: '12px', outline: 'none', boxSizing: 'border-box' }}
-            />
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+              <select
+                value={form.dia}
+                onChange={e => setForm({ ...form, dia: e.target.value })}
+                style={{ flex: 1, border: '1.5px solid #e5e7eb', borderRadius: '12px', padding: '12px 14px', fontSize: '15px', outline: 'none', background: '#fff', color: form.dia ? '#1a1a1a' : '#aaa' }}>
+                <option value="">Día</option>
+                {DIAS.map(d => <option key={d} value={d}>{d}</option>)}
+              </select>
+              <select
+                value={form.mes}
+                onChange={e => setForm({ ...form, mes: e.target.value })}
+                style={{ flex: 2, border: '1.5px solid #e5e7eb', borderRadius: '12px', padding: '12px 14px', fontSize: '15px', outline: 'none', background: '#fff', color: form.mes ? '#1a1a1a' : '#aaa' }}>
+                <option value="">Mes</option>
+                {MESES.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+              </select>
+            </div>
 
             <p style={{ fontSize: '12px', color: '#888', margin: '0 0 6px' }}>Teléfono del adulto/responsable (opcional)</p>
             <input
