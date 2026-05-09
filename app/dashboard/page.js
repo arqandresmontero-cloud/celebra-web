@@ -254,7 +254,6 @@ export default function Dashboard() {
         </div>
       )}
 
-    </div>
       {suggestedToActivate && (
         <ActivarRegaloSheet
           suggested={suggestedToActivate}
