@@ -4,21 +4,30 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { api, getToken, removeToken } from '@/lib/api';
 
+function parseDateStr(dateStr) {
+  if (!dateStr) return null;
+  // Soporta "2026-05-15", "2026-05-15T00:00:00.000Z", etc.
+  const str = dateStr.split('T')[0];
+  const parts = str.split('-').map(Number);
+  if (parts.length < 3 || parts.some(isNaN)) return null;
+  return { year: parts[0], month: parts[1], day: parts[2] };
+}
+
 function daysUntil(dateStr) {
-  if (!dateStr) return 999;
+  const parsed = parseDateStr(dateStr);
+  if (!parsed) return 999;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const date = new Date(today.getFullYear(), month - 1, day);
+  const date = new Date(today.getFullYear(), parsed.month - 1, parsed.day);
   if (date < today) date.setFullYear(today.getFullYear() + 1);
   return Math.ceil((date - today) / (1000 * 60 * 60 * 24));
 }
 
 function formatDate(dateStr) {
-  if (!dateStr) return '';
-  const [, month, day] = dateStr.split('-').map(Number);
+  const parsed = parseDateStr(dateStr);
+  if (!parsed) return '';
   const months = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-  return day + ' de ' + months[month - 1];
+  return parsed.day + ' de ' + months[parsed.month - 1];
 }
 
 function formatAmount(n) {
@@ -138,8 +147,7 @@ export default function EventoDetalle() {
           <p style={{ fontSize: '14px', color: '#555', margin: '0 0 14px', lineHeight: '1.4' }}>
             Compartí el link para que cada uno aporte a su ritmo, sin que tengas que cobrar vos.
           </p>
-          <button
-            onClick={shareWhatsApp}
+          <button onClick={shareWhatsApp}
             style={{ width: '100%', background: '#25D366', color: '#fff', border: 'none', borderRadius: '12px', padding: '14px', fontSize: '15px', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
             <span style={{ fontSize: '18px' }}>📲</span> Invitar por WhatsApp
           </button>
