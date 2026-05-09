@@ -71,8 +71,7 @@ function NuevoEvento() {
 
   const handleSubmit = async () => {
     setLoading(true);
-    setError('Llegué al handleSubmit - tipo: ' + tipo + ' amount: ' + individualAmount);
-    return;
+    setError('');
     try {
       const payload = {
         honoree_name: form.honoree_name,
