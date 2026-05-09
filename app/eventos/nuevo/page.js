@@ -145,7 +145,29 @@ function NuevoEvento() {
             </div>
             <div style={fieldWrap}>
               <label style={labelStyle}>Fecha *</label>
-              <input type="text" value={form.birthday_date} onChange={e => setForm({ ...form, birthday_date: e.target.value })} onFocus={e => { e.target.type = 'date'; }} onBlur={e => { if (!e.target.value) e.target.type = 'text'; }} placeholder="dd/mm/aaaa" style={inputStyle} />
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <select value={form.birthday_date ? form.birthday_date.split('-')[2] : ''} onChange={e => {
+                  const parts = form.birthday_date ? form.birthday_date.split('-') : ['2000','01','01'];
+                  setForm({ ...form, birthday_date: parts[0] + '-' + parts[1] + '-' + e.target.value.padStart(2,'0') });
+                }} style={{ ...inputStyle, flex: 1 }}>
+                  <option value="">Día</option>
+                  {Array.from({length:31},(_,i)=>i+1).map(d=><option key={d} value={String(d).padStart(2,'0')}>{d}</option>)}
+                </select>
+                <select value={form.birthday_date ? form.birthday_date.split('-')[1] : ''} onChange={e => {
+                  const parts = form.birthday_date ? form.birthday_date.split('-') : ['2000','01','01'];
+                  setForm({ ...form, birthday_date: parts[0] + '-' + e.target.value + '-' + parts[2] });
+                }} style={{ ...inputStyle, flex: 1 }}>
+                  <option value="">Mes</option>
+                  {['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'].map((m,i)=><option key={i} value={String(i+1).padStart(2,'0')}>{m}</option>)}
+                </select>
+                <select value={form.birthday_date ? form.birthday_date.split('-')[0] : ''} onChange={e => {
+                  const parts = form.birthday_date ? form.birthday_date.split('-') : ['2000','01','01'];
+                  setForm({ ...form, birthday_date: e.target.value + '-' + parts[1] + '-' + parts[2] });
+                }} style={{ ...inputStyle, flex: 1 }}>
+                  <option value="">Año</option>
+                  {Array.from({length:100},(_,i)=>new Date().getFullYear()-i).map(y=><option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
             </div>
             <div style={{ marginBottom: 0 }}>
               <label style={labelStyle}>¿Qué se celebra? *</label>
