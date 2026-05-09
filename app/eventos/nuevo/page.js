@@ -2,7 +2,8 @@
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { api, getToken, API_URL } from '@/lib/api';
+import { api, getToken } from '@/lib/api';
+const API_URL = 'https://celebra-production.up.railway.app';
 
 const TITULOS = [
   { value: 'Cumpleaños', label: '🎂 Cumpleaños' },
