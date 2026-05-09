@@ -145,7 +145,7 @@ function NuevoEvento() {
             </div>
             <div style={fieldWrap}>
               <label style={labelStyle}>Fecha *</label>
-              <input type="date" value={form.birthday_date} onChange={e => setForm({ ...form, birthday_date: e.target.value })} style={inputStyle} />
+              <input type="text" value={form.birthday_date} onChange={e => setForm({ ...form, birthday_date: e.target.value })} onFocus={e => { e.target.type = 'date'; }} onBlur={e => { if (!e.target.value) e.target.type = 'text'; }} placeholder="dd/mm/aaaa" style={inputStyle} />
             </div>
             <div style={{ marginBottom: 0 }}>
               <label style={labelStyle}>¿Qué se celebra? *</label>
