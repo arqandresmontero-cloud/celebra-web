@@ -100,7 +100,7 @@ function NuevoEvento() {
 
       router.push('/eventos/' + event.id);
     } catch (err) {
-      setError(err.message);
+      setError(err.message + ' | ' + JSON.stringify(err));
       setLoading(false);
     }
   };
