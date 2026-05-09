@@ -82,6 +82,22 @@ function NuevoEvento() {
         honoree_phone: form.honoree_phone || undefined,
       };
       const event = await api.createEvent(payload);
+
+      // Si es individual, ir directo al checkout de MercadoPago
+      if (tipo === 'individual' && event.collection_id) {
+        const token = localStorage.getItem('token');
+        const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/collections/' + event.collection_id + '/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ amount: Number(individualAmount) })
+        });
+        const data = await res.json();
+        if (data.checkout_url) {
+          window.location.href = data.checkout_url;
+          return;
+        }
+      }
+
       router.push('/eventos/' + event.id);
     } catch (err) {
       setError(err.message);
