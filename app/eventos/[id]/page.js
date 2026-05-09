@@ -140,24 +140,35 @@ export default function EventoDetalle() {
           </div>
         )}
 
-        <div style={{ background: '#fff', borderRadius: '20px', padding: '20px' }}>
-          <p style={{ fontSize: '11px', fontWeight: '500', color: '#888', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: '10px', marginTop: 0 }}>
-            Sumar participantes
-          </p>
-          <p style={{ fontSize: '14px', color: '#555', margin: '0 0 14px', lineHeight: '1.4' }}>
-            Compartí el link para que cada uno aporte a su ritmo, sin que tengas que cobrar vos.
-          </p>
-          <button onClick={shareWhatsApp}
-            style={{ width: '100%', background: '#25D366', color: '#fff', border: 'none', borderRadius: '12px', padding: '14px', fontSize: '15px', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '18px' }}>📲</span> Invitar por WhatsApp
-          </button>
-          {event.collection_id && (
-            <Link href={'/gift/' + id} target="_blank"
-              style={{ display: 'block', textAlign: 'center', color: '#7C3AED', fontSize: '13px', fontWeight: '500', marginTop: '10px', textDecoration: 'none' }}>
-              Ver link del regalo →
-            </Link>
-          )}
-        </div>
+        {event.type === 'solo' ? (
+          <div style={{ background: '#fff', borderRadius: '20px', padding: '20px' }}>
+            <p style={{ fontSize: '11px', fontWeight: '500', color: '#888', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: '10px', marginTop: 0 }}>
+              Tu aporte
+            </p>
+            <p style={{ fontSize: '14px', color: '#555', margin: '0 0 14px', lineHeight: '1.4' }}>
+              Pagá con MercadoPago y el regalo queda registrado al instante.
+            </p>
+          </div>
+        ) : (
+          <div style={{ background: '#fff', borderRadius: '20px', padding: '20px' }}>
+            <p style={{ fontSize: '11px', fontWeight: '500', color: '#888', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: '10px', marginTop: 0 }}>
+              Sumar participantes
+            </p>
+            <p style={{ fontSize: '14px', color: '#555', margin: '0 0 14px', lineHeight: '1.4' }}>
+              Compartí el link para que cada uno aporte a su ritmo, sin que tengas que cobrar vos.
+            </p>
+            <button onClick={shareWhatsApp}
+              style={{ width: '100%', background: '#25D366', color: '#fff', border: 'none', borderRadius: '12px', padding: '14px', fontSize: '15px', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '18px' }}>📲</span> Invitar por WhatsApp
+            </button>
+            {event.collection_id && (
+              <Link href={'/gift/' + id} target="_blank"
+                style={{ display: 'block', textAlign: 'center', color: '#7C3AED', fontSize: '13px', fontWeight: '500', marginTop: '10px', textDecoration: 'none' }}>
+                Ver link del regalo →
+              </Link>
+            )}
+          </div>
+        )}
 
         <div style={{ background: '#fff', borderRadius: '20px', padding: '20px' }}>
           <p style={{ fontSize: '11px', fontWeight: '500', color: '#888', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: '14px', marginTop: 0 }}>
