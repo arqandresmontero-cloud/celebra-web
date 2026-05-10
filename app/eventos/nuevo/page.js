@@ -85,8 +85,6 @@ function NuevoEvento() {
       const event = await api.createEvent(payload);
 
       // Si es individual, ir directo al checkout de MercadoPago
-      setError('collection_id: ' + event.collection_id + ' | tipo: ' + tipo);
-      return;
       if (tipo === 'individual' && event.collection_id) {
         const token = localStorage.getItem('token');
         const res = await fetch(API_URL + '/collections/' + event.collection_id + '/checkout', {
@@ -99,6 +97,9 @@ function NuevoEvento() {
           window.location.href = data.checkout_url;
           return;
         }
+        setError('checkout error: ' + JSON.stringify(data));
+        setLoading(false);
+        return;
       }
 
       router.push('/eventos/' + event.id);
