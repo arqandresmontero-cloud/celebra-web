@@ -83,20 +83,20 @@ export default function Perfil() {
         </button>
       </div>
 
-      <nav style={{ position:'fixed', bottom:0, left:0, right:0, background:'#fff', borderTop:'1px solid #E9D5FF', display:'flex', alignItems:'center', justifyContent:'space-around', padding:'12px 0 20px' }}>
-        <Link href="/dashboard" style={{ textDecoration:'none', textAlign:'center' }}>
-          <div style={{ fontSize:'22px' }}>🏠</div>
-          <p style={{ fontSize:'11px', color:'#999', margin:'2px 0 0' }}>Inicio</p>
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '0.5px solid rgba(0,0,0,0.08)', display: 'flex', padding: '10px 0 20px' }}>
+        <Link href="/dashboard" style={{ flex: 1, textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
+          <span style={{ fontSize: '10px', color: '#aaa', fontWeight: '500' }}>Inicio</span>
         </Link>
-        <Link href="/circulos" style={{ textDecoration:'none', textAlign:'center' }}>
-          <div style={{ fontSize:'22px' }}>👥</div>
-          <p style={{ fontSize:'11px', color:'#999', margin:'2px 0 0' }}>Círculos</p>
+        <Link href="/circulos" style={{ flex: 1, textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.8"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75"/><path d="M21 21v-2a4 4 0 00-3-3.87"/></svg>
+          <span style={{ fontSize: '10px', color: '#aaa', fontWeight: '500' }}>Círculos</span>
         </Link>
-        <Link href="/perfil" style={{ textDecoration:'none', textAlign:'center' }}>
-          <div style={{ fontSize:'22px' }}>👤</div>
-          <p style={{ fontSize:'11px', color:'#7C3AED', fontWeight:'600', margin:'2px 0 0' }}>Perfil</p>
+        <Link href="/perfil" style={{ flex: 1, textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+          <span style={{ fontSize: '10px', color: '#7C3AED', fontWeight: '500' }}>Perfil</span>
         </Link>
-      </nav>
+      </div>
     </div>
   );
 }
