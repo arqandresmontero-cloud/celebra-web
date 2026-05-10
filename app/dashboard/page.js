@@ -37,7 +37,6 @@ export default function Dashboard() {
   const [suggested, setSuggested] = useState([]);
   const [suggestedToActivate, setSuggestedToActivate] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showSheet, setShowSheet] = useState(false);
 
   useEffect(() => {
     if (!getToken()) { router.replace('/login'); return; }
@@ -53,13 +52,18 @@ export default function Dashboard() {
     </div>
   );
 
-  const sorted = [...events].sort((a, b) => daysUntil(a.birthday_date) - daysUntil(b.birthday_date));
+  // Solo eventos grupales, ordenados por fecha, máximo 3
+  const groupEvents = [...events]
+    .filter(e => e.type !== 'solo')
+    .sort((a, b) => daysUntil(a.birthday_date) - daysUntil(b.birthday_date))
+    .slice(0, 3);
 
-  // Combinar activos y sugeridos ordenados por fecha
   const allItems = [
-    ...sorted.map(e => ({ ...e, _type: 'active' })),
+    ...groupEvents.map(e => ({ ...e, _type: 'active' })),
     ...suggested.map(s => ({ ...s, _type: 'suggested' })),
   ].sort((a, b) => daysUntil(a.birthday_date || a.event_date) - daysUntil(b.birthday_date || b.event_date));
+
+  const totalGroupEvents = events.filter(e => e.type !== 'solo').length;
 
   return (
     <div style={{ minHeight: '100vh', background: '#F0EEFF', fontFamily: 'system-ui, sans-serif', paddingBottom: '80px' }}>
@@ -70,11 +74,9 @@ export default function Dashboard() {
           <h1 style={{ fontSize: '30px', fontWeight: '700', color: '#fff', letterSpacing: '-1.5px', margin: 0, lineHeight: 1 }}>
             celebra<span style={{ color: '#F97316' }}>.</span>
           </h1>
-          <button
-            onClick={() => { removeToken(); router.push('/login'); }}
-            style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.45)', fontSize: '11px', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {user ? (user.name || user.email || '').slice(0, 2).toUpperCase() : 'AM'}
-          </button>
+          <Link href="/perfil" style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.7)', fontSize: '11px', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
+            {user ? (user.name || user.email || '').slice(0, 2).toUpperCase() : 'AN'}
+          </Link>
         </div>
         <p style={{ color: 'rgba(255,255,255,0.62)', fontSize: '14px', margin: 0, letterSpacing: '-0.01em' }}>
           Regalar, por fin simple.
@@ -83,120 +85,104 @@ export default function Dashboard() {
 
       <div style={{ padding: '16px' }}>
 
-        {/* CTA principal */}
-        <button
-          onClick={() => setShowSheet(true)}
-          style={{ width: '100%', background: '#fff', color: '#5B21B6', border: 'none', borderRadius: '14px', padding: '16px 18px', fontSize: '17px', fontWeight: '500', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '9px', cursor: 'pointer', letterSpacing: '-0.01em', marginBottom: '20px' }}>
-          🎁 Crear regalo
-        </button>
+        {/* Dos botones principales */}
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '24px' }}>
+          <Link href="/eventos/nuevo?tipo=grupal" style={{ flex: 1, textDecoration: 'none' }}>
+            <div style={{ background: '#fff', borderRadius: '16px', padding: '18px 14px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', border: '1.5px solid #EDE9FE', cursor: 'pointer' }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#EDE9FE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>👥</div>
+              <p style={{ fontWeight: '600', fontSize: '14px', color: '#3B1FA8', margin: 0, textAlign: 'center', letterSpacing: '-0.01em' }}>Regalo grupal</p>
+              <p style={{ fontSize: '11px', color: '#999', margin: 0, textAlign: 'center', lineHeight: '1.3' }}>Junten entre todos</p>
+            </div>
+          </Link>
+          <Link href="/eventos/nuevo?tipo=individual" style={{ flex: 1, textDecoration: 'none' }}>
+            <div style={{ background: '#fff', borderRadius: '16px', padding: '18px 14px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', border: '1.5px solid #FFF4ED', cursor: 'pointer' }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#FFF4ED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>🎁</div>
+              <p style={{ fontWeight: '600', fontSize: '14px', color: '#92400e', margin: 0, textAlign: 'center', letterSpacing: '-0.01em' }}>Regalo individual</p>
+              <p style={{ fontSize: '11px', color: '#999', margin: 0, textAlign: 'center', lineHeight: '1.3' }}>Giftcard o efectivo</p>
+            </div>
+          </Link>
+        </div>
 
-        {/* Próximos */}
-        <p style={{ fontSize: '11px', fontWeight: '500', color: '#888', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: '12px' }}>
-          Próximos
-        </p>
-
-        {allItems.length === 0 ? (
-          <div style={{ background: '#fff', borderRadius: '16px', padding: '32px', textAlign: 'center', border: '1px dashed #DDD6FE' }}>
-            <p style={{ color: '#aaa', fontSize: '14px', lineHeight: '1.5', margin: 0 }}>
-              Todavía no tenés regalos.<br />Tocá "Crear regalo" para empezar.
+        {/* Regalos grupales activos + sugeridos */}
+        {allItems.length > 0 && (
+          <>
+            <p style={{ fontSize: '11px', fontWeight: '500', color: '#888', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: '12px' }}>
+              Próximos
             </p>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {allItems.slice(0, 6).map((item) => {
-              if (item._type === 'suggested') {
-                const days = daysUntil(item.event_date);
-                const date = new Date(item.event_date);
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {allItems.map((item) => {
+                if (item._type === 'suggested') {
+                  const days = daysUntil(item.event_date);
+                  const date = new Date(item.event_date);
+                  const dateStr = date.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
+                  return (
+                    <div key={'s-' + item.id} onClick={() => setSuggestedToActivate(item)} style={{ cursor: 'pointer' }}>
+                      <div style={{ background: '#fff', borderRadius: '16px', border: '1.5px dashed #F97316', overflow: 'hidden' }}>
+                        <div style={{ background: '#FFF4ED', padding: '14px 16px 12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#fff', border: '2px solid rgba(249,115,22,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>🎂</div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontWeight: '500', fontSize: '16px', color: '#92400e', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</p>
+                            <p style={{ fontSize: '12px', color: '#F97316', margin: 0 }}>Sugerido · Tocá para activar</p>
+                          </div>
+                          <div style={{ fontSize: '11px', fontWeight: '500', color: '#F97316', background: 'rgba(249,115,22,0.1)', padding: '4px 9px', borderRadius: '8px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                            {days === 0 ? 'Hoy' : days === 1 ? 'Mañana' : dateStr}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                const e = item;
+                const days = daysUntil(e.birthday_date);
+                const date = new Date(e.birthday_date);
                 const dateStr = date.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
+                const emoji = getEventEmoji(e.type, e.title);
+                const collected = parseFloat(e.collected) || 0;
+                const target = parseFloat(e.target_amount) || 0;
+                const pct = target > 0 ? Math.min(100, Math.round((collected / target) * 100)) : 0;
+
                 return (
-                  <div key={'s-' + item.id} onClick={() => setSuggestedToActivate(item)} style={{ cursor: 'pointer' }}>
-                    <div style={{ background: '#fff', borderRadius: '16px', border: '1.5px dashed #F97316', overflow: 'hidden', opacity: 0.95 }}>
-                      <div style={{ background: '#FFF4ED', padding: '14px 16px 12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#fff', border: '2px solid rgba(249,115,22,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
-                          🎂
-                        </div>
+                  <Link key={'e-' + e.id} href={'/eventos/' + e.id} style={{ textDecoration: 'none' }}>
+                    <div style={{ background: '#fff', borderRadius: '16px', border: '0.5px solid rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+                      <div style={{ background: '#F5F3FF', padding: '14px 16px 12px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '0.5px solid #EDE9FE' }}>
+                        <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#fff', border: '2px solid rgba(109,40,217,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>{emoji}</div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontWeight: '500', fontSize: '16px', color: '#92400e', margin: '0 0 2px', letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {item.title}
-                          </p>
-                          <p style={{ fontSize: '12px', color: '#F97316', margin: 0 }}>
-                            Sugerido · Pendiente de activar
+                          <p style={{ fontWeight: '500', fontSize: '16px', color: '#3B1FA8', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</p>
+                          <p style={{ fontSize: '12px', color: '#7C3AED', margin: 0 }}>
+                            {e.contributor_count > 0 ? `${e.contributor_count} aportaron` : 'Sin aportes aún'}
                           </p>
                         </div>
-                        <div style={{ fontSize: '11px', fontWeight: '500', color: '#F97316', background: 'rgba(249,115,22,0.1)', padding: '4px 9px', borderRadius: '8px', whiteSpace: 'nowrap', alignSelf: 'flex-start', flexShrink: 0 }}>
+                        <div style={{ fontSize: '11px', fontWeight: '500', color: '#6D28D9', background: 'rgba(109,40,217,0.1)', padding: '4px 9px', borderRadius: '8px', whiteSpace: 'nowrap', flexShrink: 0 }}>
                           {days === 0 ? 'Hoy' : days === 1 ? 'Mañana' : dateStr}
                         </div>
                       </div>
-                      <div style={{ padding: '10px 16px 12px', display: 'flex', justifyContent: 'flex-end' }}>
-                        <span style={{ fontSize: '12px', fontWeight: '500', color: '#F97316' }}>
-                          Tocá para activar el regalo →
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              }
-
-              // Item activo
-              const e = item;
-              const days = daysUntil(e.birthday_date);
-              const date = new Date(e.birthday_date);
-              const dateStr = date.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
-              const emoji = getEventEmoji(e.type, e.title);
-              const totalGoal = parseFloat(e.goal_amount) || 0;
-              const totalCollected = parseFloat(e.collected_amount) || 0;
-              const pct = totalGoal > 0 ? Math.min(100, Math.round((totalCollected / totalGoal) * 100)) : 0;
-              const participantCount = e.participant_count || e.participants?.length || 0;
-              const contributorCount = e.contributor_count || 0;
-
-              return (
-                <Link key={'e-' + e.id} href={'/eventos/' + e.id} style={{ textDecoration: 'none' }}>
-                  <div style={{ background: '#fff', borderRadius: '16px', border: '0.5px solid rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-                    <div style={{ background: '#F5F3FF', padding: '14px 16px 12px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '0.5px solid #EDE9FE' }}>
-                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#fff', border: '2px solid rgba(109,40,217,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
-                        {emoji}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontWeight: '500', fontSize: '16px', color: '#3B1FA8', margin: '0 0 2px', letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {e.title}
-                        </p>
-                        <p style={{ fontSize: '12px', color: '#7C3AED', margin: 0 }}>
-                          {participantCount > 0 ? `${participantCount} invitados · ` : ''}{contributorCount > 0 ? `${contributorCount} aportaron` : 'Sin aportes aún'}
-                        </p>
-                      </div>
-                      <div style={{ fontSize: '11px', fontWeight: '500', color: '#6D28D9', background: 'rgba(109,40,217,0.1)', padding: '4px 9px', borderRadius: '8px', whiteSpace: 'nowrap', alignSelf: 'flex-start', flexShrink: 0 }}>
-                        {days === 0 ? 'Hoy' : days === 1 ? 'Mañana' : dateStr}
-                      </div>
-                    </div>
-                    {totalGoal > 0 && (
-                      <div style={{ padding: '12px 16px 14px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
-                          <span style={{ fontSize: '20px', fontWeight: '500', color: '#1a1a1a', letterSpacing: '-0.02em' }}>
-                            {formatAmount(totalCollected)}
-                          </span>
-                          <span style={{ fontSize: '12px', color: '#999' }}>
-                            meta {formatAmount(totalGoal)}
-                          </span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
-                          <div style={{ flex: 1, height: '5px', background: '#EDE9FE', borderRadius: '99px', overflow: 'hidden' }}>
-                            <div style={{ height: '100%', width: pct + '%', background: '#7C3AED', borderRadius: '99px' }} />
+                      {target > 0 && (
+                        <div style={{ padding: '12px 16px 14px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
+                            <span style={{ fontSize: '20px', fontWeight: '500', color: '#1a1a1a', letterSpacing: '-0.02em' }}>{formatAmount(collected)}</span>
+                            <span style={{ fontSize: '12px', color: '#999' }}>meta {formatAmount(target)}</span>
                           </div>
-                          <span style={{ fontSize: '11px', fontWeight: '500', color: '#7C3AED', whiteSpace: 'nowrap' }}>{pct}%</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+                            <div style={{ flex: 1, height: '5px', background: '#EDE9FE', borderRadius: '99px', overflow: 'hidden' }}>
+                              <div style={{ height: '100%', width: pct + '%', background: '#7C3AED', borderRadius: '99px' }} />
+                            </div>
+                            <span style={{ fontSize: '11px', fontWeight: '500', color: '#7C3AED' }}>{pct}%</span>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                </Link>
-              );
-            })}
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
 
-            {allItems.length > 6 && (
-              <Link href="/eventos" style={{ display: 'block', textAlign: 'center', color: '#7C3AED', fontWeight: '500', fontSize: '14px', textDecoration: 'none', padding: '8px 0' }}>
-                Ver todos ({allItems.length}) →
-              </Link>
-            )}
-          </div>
+              {totalGroupEvents > 3 && (
+                <Link href="/eventos" style={{ display: 'block', textAlign: 'center', color: '#7C3AED', fontWeight: '500', fontSize: '14px', textDecoration: 'none', padding: '8px 0' }}>
+                  Ver todos ({totalGroupEvents}) →
+                </Link>
+              )}
+            </div>
+          </>
         )}
       </div>
 
@@ -215,44 +201,6 @@ export default function Dashboard() {
           <span style={{ fontSize: '10px', color: '#aaa', fontWeight: '500' }}>Perfil</span>
         </Link>
       </div>
-
-      {/* Bottom sheet — Crear regalo */}
-      {showSheet && (
-        <div onClick={() => setShowSheet(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(30,10,60,0.45)', zIndex: 100, display: 'flex', alignItems: 'flex-end' }}>
-          <div onClick={e => e.stopPropagation()} style={{ width: '100%', background: '#fff', borderRadius: '24px 24px 0 0', padding: '0 0 40px' }}>
-            <div style={{ width: '36px', height: '4px', background: '#E5E7EB', borderRadius: '99px', margin: '12px auto 0' }} />
-            <h2 style={{ fontSize: '18px', fontWeight: '500', color: '#1a1a1a', letterSpacing: '-0.02em', textAlign: 'center', padding: '16px 24px 4px' }}>
-              ¿Cómo querés regalar?
-            </h2>
-            <p style={{ fontSize: '13px', color: '#aaa', textAlign: 'center', padding: '0 24px 20px', lineHeight: '1.4', margin: 0 }}>
-              Elegí el tipo de regalo y seguimos.
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '0 16px' }}>
-              <Link href="/eventos/nuevo?tipo=grupal" style={{ textDecoration: 'none' }}>
-                <div style={{ borderRadius: '16px', border: '1.5px solid #7C3AED', padding: '18px', display: 'flex', alignItems: 'flex-start', gap: '14px', background: '#FAFAFF', cursor: 'pointer' }}>
-                  <div style={{ width: '46px', height: '46px', borderRadius: '14px', background: '#EDE9FE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>👥</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                      <p style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em' }}>Regalo grupal</p>
-                      <span style={{ fontSize: '10px', fontWeight: '500', color: '#6D28D9', background: '#EDE9FE', padding: '3px 8px', borderRadius: '6px' }}>Popular</span>
-                    </div>
-                    <p style={{ fontSize: '13px', color: '#888', margin: 0, lineHeight: '1.4' }}>Invitá a otros, junten el dinero y sorprendan juntos.</p>
-                  </div>
-                </div>
-              </Link>
-              <Link href="/eventos/nuevo?tipo=individual" style={{ textDecoration: 'none' }}>
-                <div style={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.08)', padding: '18px', display: 'flex', alignItems: 'flex-start', gap: '14px', background: '#fff', cursor: 'pointer' }}>
-                  <div style={{ width: '46px', height: '46px', borderRadius: '14px', background: '#FFF4ED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>🎁</div>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', margin: '0 0 4px', letterSpacing: '-0.01em' }}>Regalo individual</p>
-                    <p style={{ fontSize: '13px', color: '#888', margin: 0, lineHeight: '1.4' }}>Elegí una giftcard y enviála al instante.</p>
-                  </div>
-                </div>
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
 
       {suggestedToActivate && (
         <ActivarRegaloSheet
