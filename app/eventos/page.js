@@ -38,11 +38,9 @@ export default function Eventos() {
 
   return (
     <div style={{ minHeight:'100vh', background:'#F0EEFF', fontFamily:'system-ui, sans-serif', paddingBottom:'80px' }}>
-      <div style={{ background:'#7C3AED', padding:'48px 24px 24px' }}>
-        <h1 style={{ fontSize:'28px', fontWeight:'800', color:'#fff', letterSpacing:'-1px', margin:0 }}>
-          celebra<span style={{ color:'#FFA500' }}>.</span>
-        </h1>
-        <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'14px', marginTop:'4px', marginBottom:0 }}>Todos tus eventos</p>
+      <div style={{ background:'#6B3FD4', padding:'52px 20px 24px', display:'flex', alignItems:'center', gap:'14px' }}>
+        <button onClick={() => router.back()} style={{ background:'none', border:'none', color:'rgba(255,255,255,0.7)', fontSize:'22px', cursor:'pointer', padding:0, lineHeight:1 }}>←</button>
+        <h1 style={{ fontSize:'20px', fontWeight:'600', color:'#fff', margin:0, letterSpacing:'-0.02em' }}>Tus regalos</h1>
       </div>
 
       <div style={{ padding:'24px' }}>
@@ -85,12 +83,19 @@ export default function Eventos() {
         )}
       </div>
 
-      <div style={{ position:'fixed', bottom:0, left:0, right:0, background:'#fff', borderTop:'1px solid #E9D5FF', display:'flex', alignItems:'center', justifyContent:'space-around', padding:'12px 0 20px' }}>
-        <Link href="/dashboard" style={{ textDecoration:'none', textAlign:'center' }}><div style={{ fontSize:'22px' }}>🏠</div><p style={{ fontSize:'11px', color:'#999', margin:'2px 0 0' }}>Inicio</p></Link>
-        <Link href="/eventos" style={{ textDecoration:'none', textAlign:'center' }}><div style={{ fontSize:'22px' }}>📅</div><p style={{ fontSize:'11px', color:'#7C3AED', fontWeight:'600', margin:'2px 0 0' }}>Eventos</p></Link>
-        <Link href="/eventos/nuevo" style={{ textDecoration:'none', textAlign:'center' }}><div style={{ width:'48px', height:'48px', background:'#7C3AED', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'-16px auto 0', fontSize:'24px', color:'#fff' }}>+</div></Link>
-        <Link href="/amigos" style={{ textDecoration:'none', textAlign:'center' }}><div style={{ fontSize:'22px' }}>🎂</div><p style={{ fontSize:'11px', color:'#999', margin:'2px 0 0' }}>Cumpleaños</p></Link>
-        <Link href="/perfil" style={{ textDecoration:'none', textAlign:'center' }}><div style={{ fontSize:'22px' }}>👤</div><p style={{ fontSize:'11px', color:'#999', margin:'2px 0 0' }}>Perfil</p></Link>
+      <div style={{ position:'fixed', bottom:0, left:0, right:0, background:'#fff', borderTop:'0.5px solid rgba(0,0,0,0.08)', display:'flex', padding:'10px 0 20px' }}>
+        <Link href="/dashboard" style={{ flex:1, textDecoration:'none', display:'flex', flexDirection:'column', alignItems:'center', gap:'4px' }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span style={{ fontSize:'10px', color:'#aaa', fontWeight:'500' }}>Inicio</span>
+        </Link>
+        <Link href="/circulos" style={{ flex:1, textDecoration:'none', display:'flex', flexDirection:'column', alignItems:'center', gap:'4px' }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.8"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75"/><path d="M21 21v-2a4 4 0 00-3-3.87"/></svg>
+          <span style={{ fontSize:'10px', color:'#aaa', fontWeight:'500' }}>Círculos</span>
+        </Link>
+        <Link href="/perfil" style={{ flex:1, textDecoration:'none', display:'flex', flexDirection:'column', alignItems:'center', gap:'4px' }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span style={{ fontSize:'10px', color:'#aaa', fontWeight:'500' }}>Perfil</span>
+        </Link>
       </div>
     </div>
   );
