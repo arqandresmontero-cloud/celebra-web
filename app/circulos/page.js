@@ -2,11 +2,32 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { api, getToken, removeToken } from '@/lib/api';
+import { api, getToken, removeToken, deleteCircle } from '@/lib/api';
 
 export default function Circulos() {
   const router = useRouter();
   const [circles, setCircles] = useState([]);
+  const [swipeX, setSwipeX] = useState({});
+  const [deleting, setDeleting] = useState(null);
+  const touchStart = {};
+
+  const handleTouchStart = (id, e) => {
+    touchStart[id] = e.touches[0].clientX;
+  };
+  const handleTouchEnd = (id, e) => {
+    const diff = touchStart[id] - e.changedTouches[0].clientX;
+    if (diff > 60) setSwipeX(prev => ({ ...prev, [id]: -80 }));
+    else setSwipeX(prev => ({ ...prev, [id]: 0 }));
+  };
+  const handleDelete = async (id) => {
+    if (!confirm('¿Borrar este círculo?')) return;
+    setDeleting(id);
+    try {
+      await deleteCircle(id);
+      setCircles(circles.filter(c => c.id !== id));
+    } catch(e) { alert('Error al borrar'); }
+    setDeleting(null);
+  };
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
   const [form, setForm] = useState({ name: '', emoji: '👥', description: '' });
@@ -75,22 +96,33 @@ export default function Circulos() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {circles.map(c => (
-              <Link key={c.id} href={'/circulos/' + c.id} style={{ textDecoration: 'none' }}>
-                <div style={{ background: '#fff', borderRadius: '16px', border: '0.5px solid rgba(0,0,0,0.06)', padding: '16px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#EDE9FE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
-                    {c.emoji || '👥'}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', margin: '0 0 3px', letterSpacing: '-0.01em' }}>{c.name}</p>
-                    <p style={{ fontSize: '12px', color: '#999', margin: 0 }}>
-                      {c.people_count || 0} personas · {c.member_count || 0} miembros
-                    </p>
-                  </div>
-                  <span style={{ fontSize: '10px', fontWeight: '500', color: c.role === 'admin' ? '#6D28D9' : '#aaa', background: c.role === 'admin' ? '#EDE9FE' : '#f5f5f5', padding: '3px 8px', borderRadius: '6px' }}>
-                    {c.role === 'admin' ? 'Admin' : 'Miembro'}
-                  </span>
+              <div key={c.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '16px' }}>
+                <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '80px', background: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '0 16px 16px 0' }}
+                  onClick={() => handleDelete(c.id)}>
+                  <span style={{ color: '#fff', fontSize: '13px', fontWeight: '600' }}>{deleting === c.id ? '...' : 'Borrar'}</span>
                 </div>
-              </Link>
+                <div
+                  onTouchStart={e => handleTouchStart(c.id, e)}
+                  onTouchEnd={e => handleTouchEnd(c.id, e)}
+                  style={{ transform: `translateX(${swipeX[c.id] || 0}px)`, transition: 'transform 0.2s', position: 'relative', zIndex: 1 }}
+                  onClick={() => { if (!swipeX[c.id]) router.push('/circulos/' + c.id); else setSwipeX(prev => ({ ...prev, [c.id]: 0 })); }}
+                >
+                  <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.06)', padding: '16px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#EDE9FE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
+                      {c.emoji || '👥'}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', margin: '0 0 3px', letterSpacing: '-0.01em' }}>{c.name}</p>
+                      <p style={{ fontSize: '12px', color: '#999', margin: 0 }}>
+                        {c.people_count || 0} personas · {c.member_count || 0} miembros
+                      </p>
+                    </div>
+                    <span style={{ fontSize: '10px', fontWeight: '500', color: c.role === 'admin' ? '#6D28D9' : '#aaa', background: c.role === 'admin' ? '#EDE9FE' : '#f5f5f5', padding: '3px 8px', borderRadius: '6px' }}>
+                      {c.role === 'admin' ? 'Admin' : 'Miembro'}
+                    </span>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         )}

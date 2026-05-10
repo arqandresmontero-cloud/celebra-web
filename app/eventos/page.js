@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { api, getToken, removeToken } from '@/lib/api';
+import { api, getToken, removeToken, deleteEvent } from '@/lib/api';
 
 function daysUntil(dateStr) {
   if (!dateStr) return 999;
@@ -25,6 +25,25 @@ export default function Eventos() {
   const router = useRouter();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [swipeX, setSwipeX] = useState({});
+  const [deleting, setDeleting] = useState(null);
+  const touchStart = {};
+
+  const handleTouchStart = (id, e) => { touchStart[id] = e.touches[0].clientX; };
+  const handleTouchEnd = (id, e) => {
+    const diff = touchStart[id] - e.changedTouches[0].clientX;
+    if (diff > 60) setSwipeX(prev => ({ ...prev, [id]: -80 }));
+    else setSwipeX(prev => ({ ...prev, [id]: 0 }));
+  };
+  const handleDelete = async (id) => {
+    if (!confirm('¿Borrar este evento?')) return;
+    setDeleting(id);
+    try {
+      await deleteEvent(id);
+      setEvents(events.filter(e => e.id !== id));
+    } catch(err) { alert('Error al borrar'); }
+    setDeleting(null);
+  };
 
   useEffect(() => {
     if (!getToken()) { router.replace('/login'); return; }
@@ -58,25 +77,36 @@ export default function Eventos() {
               const dateStr = date.toLocaleDateString('es-AR', { day:'numeric', month:'long' });
               const pct = e.target_amount ? Math.min(100, Math.round((e.collected || 0) / e.target_amount * 100)) : 0;
               return (
-                <Link key={e.id} href={'/eventos/'+e.id} style={{ textDecoration:'none' }}>
-                  <div style={{ background:'#fff', borderRadius:'16px', padding:'16px', display:'flex', alignItems:'center', gap:'14px' }}>
-                    <div style={{ width:'44px', height:'44px', borderRadius:'12px', background: COLORS[i % COLORS.length], display:'flex', alignItems:'center', justifyContent:'center', fontSize:'16px', fontWeight:'700', color:'#7C3AED', flexShrink:0 }}>
-                      {initials(e.honoree_name)}
-                    </div>
-                    <div style={{ flex:1, minWidth:0 }}>
-                      <p style={{ fontWeight:'600', fontSize:'15px', color:'#1a1a1a', margin:'0 0 2px' }}>{e.title}</p>
-                      <p style={{ fontSize:'13px', color:'#7C3AED', margin:'0 0 6px' }}>{dateStr} · {e.type === 'group' ? 'grupal':'individual'}</p>
-                      {e.target_amount && (
-                        <div style={{ background:'#F0EEFF', borderRadius:'4px', height:'4px', overflow:'hidden' }}>
-                          <div style={{ width: pct+'%', background:'#7C3AED', height:'100%', borderRadius:'4px' }} />
-                        </div>
-                      )}
-                    </div>
-                    <div style={{ background:'#F0EEFF', borderRadius:'10px', padding:'6px 10px', fontSize:'13px', fontWeight:'600', color:'#7C3AED', flexShrink:0 }}>
-                      {days === 0 ? 'Hoy' : days+'d'}
+                <div key={e.id} style={{ position:'relative', overflow:'hidden', borderRadius:'16px' }}>
+                  <div style={{ position:'absolute', right:0, top:0, bottom:0, width:'80px', background:'#ef4444', display:'flex', alignItems:'center', justifyContent:'center', borderRadius:'0 16px 16px 0' }}
+                    onClick={() => handleDelete(e.id)}>
+                    <span style={{ color:'#fff', fontSize:'13px', fontWeight:'600' }}>{deleting === e.id ? '...' : 'Borrar'}</span>
+                  </div>
+                  <div
+                    onTouchStart={ev => handleTouchStart(e.id, ev)}
+                    onTouchEnd={ev => handleTouchEnd(e.id, ev)}
+                    style={{ transform: `translateX(${swipeX[e.id] || 0}px)`, transition:'transform 0.2s', position:'relative', zIndex:1 }}
+                    onClick={() => { if (!swipeX[e.id]) router.push('/eventos/' + e.id); else setSwipeX(prev => ({ ...prev, [e.id]: 0 })); }}
+                  >
+                    <div style={{ background:'#fff', padding:'16px', display:'flex', alignItems:'center', gap:'14px' }}>
+                      <div style={{ width:'44px', height:'44px', borderRadius:'12px', background: COLORS[i % COLORS.length], display:'flex', alignItems:'center', justifyContent:'center', fontSize:'16px', fontWeight:'700', color:'#7C3AED', flexShrink:0 }}>
+                        {initials(e.honoree_name)}
+                      </div>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <p style={{ fontWeight:'600', fontSize:'15px', color:'#1a1a1a', margin:'0 0 2px' }}>{e.title}</p>
+                        <p style={{ fontSize:'13px', color:'#7C3AED', margin:'0 0 6px' }}>{dateStr} · {e.type === 'group' ? 'grupal':'individual'}</p>
+                        {e.target_amount && (
+                          <div style={{ background:'#F0EEFF', borderRadius:'4px', height:'4px', overflow:'hidden' }}>
+                            <div style={{ width: pct+'%', background:'#7C3AED', height:'100%', borderRadius:'4px' }} />
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ background:'#F0EEFF', borderRadius:'10px', padding:'6px 10px', fontSize:'13px', fontWeight:'600', color:'#7C3AED', flexShrink:0 }}>
+                        {days === 0 ? 'Hoy' : days+'d'}
+                      </div>
                     </div>
                   </div>
-                </Link>
+                </div>
               );
             })}
           </div>
