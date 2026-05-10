@@ -49,10 +49,45 @@ function NuevoEvento() {
   const [loading, setLoading] = useState(false);
   const [showAmountInput, setShowAmountInput] = useState(false);
   const [individualAmount, setIndividualAmount] = useState('');
+  const [giftMode, setGiftMode] = useState('');
+  const [providers, setProviders] = useState([]);
+  const [selectedProvider, setSelectedProvider] = useState(null);
+  const [giftcardAmount, setGiftcardAmount] = useState('');
+  const [giftcardResult, setGiftcardResult] = useState(null);
+  const [loadingProviders, setLoadingProviders] = useState(false);
 
   if (!getToken()) { router.replace('/login'); return null; }
 
   const tituloFinal = form.tituloOpcion === 'Otro' ? form.tituloCustom : form.tituloOpcion;
+
+  const loadProviders = async () => {
+    setLoadingProviders(true);
+    try {
+      const token = localStorage.getItem('celebra_token');
+      const res = await fetch(API_URL + '/giftcard-providers', { headers: { Authorization: 'Bearer ' + token } });
+      const data = await res.json();
+      setProviders(data);
+    } catch(e) { console.error(e); }
+    setLoadingProviders(false);
+  };
+
+  const handleGiftcardPurchase = async () => {
+    if (!selectedProvider || !giftcardAmount) return;
+    setLoading(true);
+    setError('');
+    try {
+      const token = localStorage.getItem('celebra_token');
+      const res = await fetch(API_URL + '/giftcard/purchase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ provider_id: selectedProvider.id, amount: Number(giftcardAmount), honoree_name: form.honoree_name, honoree_phone: form.honoree_phone })
+      });
+      const data = await res.json();
+      if (data.ok) setGiftcardResult(data);
+      else setError(data.error || 'Error al procesar');
+    } catch(e) { setError('Error de conexión'); }
+    setLoading(false);
+  };
 
   const handleNext = () => {
     setError('');
@@ -248,43 +283,97 @@ function NuevoEvento() {
   );
 
   // Individual paso 2 — elegir tipo de regalo
+
+  // Pantalla resultado giftcard
+  if (giftcardResult) return (
+    <div style={{ minHeight: '100vh', background: '#F0EEFF', fontFamily: 'system-ui, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+      <div style={{ maxWidth: '420px', width: '100%', textAlign: 'center' }}>
+        <div style={{ fontSize: '64px', marginBottom: '16px' }}>🎉</div>
+        <h2 style={{ fontSize: '26px', fontWeight: '700', color: '#3B1FA8', marginBottom: '8px' }}>¡Giftcard enviada!</h2>
+        <p style={{ color: '#888', marginBottom: '24px' }}>Le enviaste una giftcard de <strong style={{ color: '#3B1FA8' }}>{giftcardResult.provider}</strong> a {giftcardResult.honoree_name}</p>
+        <div style={{ background: '#fff', borderRadius: '20px', padding: '28px', border: '0.5px solid rgba(0,0,0,0.06)', marginBottom: '24px' }}>
+          <p style={{ color: '#999', fontSize: '12px', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Código</p>
+          <p style={{ color: '#6B3FD4', fontSize: '24px', fontWeight: '800', letterSpacing: '3px', margin: '0 0 16px' }}>{giftcardResult.code}</p>
+          <p style={{ color: '#888', fontSize: '14px', margin: 0 }}>Monto: <strong>${Number(giftcardResult.amount).toLocaleString('es-AR')}</strong></p>
+        </div>
+        <button onClick={() => router.push('/dashboard')}
+          style={{ width: '100%', background: '#6B3FD4', color: '#fff', border: 'none', borderRadius: '14px', padding: '16px', fontSize: '16px', fontWeight: '600', cursor: 'pointer' }}>
+          Volver al inicio
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div style={{ minHeight: '100vh', background: '#F0EEFF', fontFamily: 'system-ui, sans-serif', paddingBottom: '40px' }}>
       {header}
       <div style={{ padding: '16px' }}>
         {error && <div style={{ background: '#FFF0F0', border: '1px solid #ffcccc', borderRadius: '12px', padding: '12px', marginBottom: '16px', color: '#cc0000', fontSize: '14px' }}>{error}</div>}
         <p style={{ fontSize: '15px', color: '#555', marginBottom: '16px', textAlign: 'center' }}>¿Cómo querés regalar a <strong>{form.honoree_name}</strong>?</p>
-
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={{ background: '#fff', borderRadius: '20px', padding: '20px', border: '2px solid #F0EEFF', opacity: 0.6, position: 'relative' }}>
-            <div style={{ position: 'absolute', top: 12, right: 14, background: '#F0EEFF', borderRadius: '8px', padding: '3px 8px', fontSize: '11px', fontWeight: '600', color: '#7C3AED' }}>Próximamente</div>
-            <div style={{ fontSize: '28px', marginBottom: '8px' }}>🎁</div>
-            <p style={{ fontWeight: '600', fontSize: '16px', margin: '0 0 4px', color: '#1a1a1a' }}>Giftcard</p>
-            <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>Enviá una tarjeta de regalo de tu marca favorita al instante.</p>
+          <div style={{ background: '#fff', borderRadius: '20px', padding: '20px', border: giftMode === 'giftcard' ? '2px solid #6B3FD4' : '1.5px solid #EDE9FE' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: giftMode === 'giftcard' ? '16px' : '0', cursor: 'pointer' }}
+              onClick={() => { if (giftMode !== 'giftcard') { setGiftMode('giftcard'); loadProviders(); } else setGiftMode(''); }}>
+              <div style={{ fontSize: '28px' }}>🎁</div>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontWeight: '600', fontSize: '16px', margin: '0 0 2px', color: '#1a1a1a' }}>Giftcard</p>
+                <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>Elegí la marca y el monto.</p>
+              </div>
+              <span style={{ fontSize: '18px', color: '#ccc' }}>{giftMode === 'giftcard' ? '▲' : '▼'}</span>
+            </div>
+            {giftMode === 'giftcard' && (
+              <div>
+                {loadingProviders ? (
+                  <p style={{ color: '#999', textAlign: 'center', padding: '16px 0' }}>Cargando...</p>
+                ) : (
+                  <>
+                    <p style={{ fontSize: '12px', color: '#999', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Elegí la marca</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
+                      {providers.map(p => (
+                        <button key={p.id} onClick={() => setSelectedProvider(p)}
+                          style={{ padding: '10px 16px', borderRadius: '12px', border: selectedProvider?.id === p.id ? '2px solid #6B3FD4' : '1px solid #EDE9FE', background: selectedProvider?.id === p.id ? '#EDE9FE' : '#fafafa', color: selectedProvider?.id === p.id ? '#6B3FD4' : '#555', fontSize: '14px', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span>{p.logo_url}</span> {p.name}
+                        </button>
+                      ))}
+                    </div>
+                    {selectedProvider && (
+                      <>
+                        <p style={{ fontSize: '12px', color: '#999', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Elegí el monto</p>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
+                          {[500, 1000, 2000, 5000].map(m => (
+                            <button key={m} onClick={() => setGiftcardAmount(String(m))}
+                              style={{ padding: '10px 16px', borderRadius: '12px', border: giftcardAmount === String(m) ? '2px solid #6B3FD4' : '1px solid #EDE9FE', background: giftcardAmount === String(m) ? '#EDE9FE' : '#fafafa', color: giftcardAmount === String(m) ? '#6B3FD4' : '#555', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>
+                              ${m.toLocaleString('es-AR')}
+                            </button>
+                          ))}
+                        </div>
+                        <button onClick={handleGiftcardPurchase} disabled={loading || !giftcardAmount}
+                          style={{ width: '100%', background: loading || !giftcardAmount ? '#ccc' : '#6B3FD4', color: '#fff', border: 'none', borderRadius: '12px', padding: '14px', fontSize: '15px', fontWeight: '600', cursor: loading || !giftcardAmount ? 'not-allowed' : 'pointer' }}>
+                          {loading ? 'Procesando...' : 'Enviar giftcard 🎁'}
+                        </button>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
           </div>
-
-          <div style={{ background: '#fff', borderRadius: '20px', padding: '20px', border: '2px solid #E9D5FF' }}>
-            <div style={{ fontSize: '28px', marginBottom: '8px' }}>💸</div>
-            <p style={{ fontWeight: '600', fontSize: '16px', margin: '0 0 4px', color: '#1a1a1a' }}>Monto en efectivo</p>
-            <p style={{ fontSize: '13px', color: '#888', margin: '0 0 14px' }}>Pagá ahora por MercadoPago y listo.</p>
-
-            {!showAmountInput ? (
-              <button onClick={() => setShowAmountInput(true)}
-                style={{ width: '100%', background: '#6B3FD4', color: '#fff', border: 'none', borderRadius: '12px', padding: '13px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}>
-                Elegir monto →
-              </button>
-            ) : (
+          <div style={{ background: '#fff', borderRadius: '20px', padding: '20px', border: giftMode === 'cash' ? '2px solid #6B3FD4' : '1.5px solid #EDE9FE' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: giftMode === 'cash' ? '16px' : '0', cursor: 'pointer' }}
+              onClick={() => { if (giftMode !== 'cash') setGiftMode('cash'); else setGiftMode(''); }}>
+              <div style={{ fontSize: '28px' }}>💸</div>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontWeight: '600', fontSize: '16px', margin: '0 0 2px', color: '#1a1a1a' }}>Monto en efectivo</p>
+                <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>Pagá por MercadoPago.</p>
+              </div>
+              <span style={{ fontSize: '18px', color: '#ccc' }}>{giftMode === 'cash' ? '▲' : '▼'}</span>
+            </div>
+            {giftMode === 'cash' && (
               <div>
                 <div style={{ position: 'relative', marginBottom: '12px' }}>
                   <span style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', color: '#888', fontSize: '16px' }}>$</span>
-                  <input
-                    type="number"
-                    value={individualAmount}
-                    onChange={e => setIndividualAmount(e.target.value)}
-                    placeholder="0"
-                    autoFocus
-                    style={{ ...inputStyle, paddingLeft: '28px' }}
-                  />
+                  <input type="number" value={individualAmount} onChange={e => setIndividualAmount(e.target.value)}
+                    placeholder="0" style={{ ...inputStyle, paddingLeft: '28px' }} />
                 </div>
                 <button onClick={handleSubmit} disabled={loading || !individualAmount}
                   style={{ width: '100%', background: loading || !individualAmount ? '#ccc' : '#6B3FD4', color: '#fff', border: 'none', borderRadius: '12px', padding: '13px', fontSize: '15px', fontWeight: '500', cursor: loading || !individualAmount ? 'not-allowed' : 'pointer' }}>
