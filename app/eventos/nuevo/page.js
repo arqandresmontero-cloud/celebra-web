@@ -86,7 +86,7 @@ function NuevoEvento() {
 
       // Si es individual, ir directo al checkout de MercadoPago
       if (tipo === 'individual' && event.collection_id) {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('celebra_token');
         const res = await fetch(API_URL + '/collections/' + event.collection_id + '/checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
