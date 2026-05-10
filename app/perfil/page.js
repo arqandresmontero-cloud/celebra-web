@@ -42,9 +42,6 @@ export default function Perfil() {
   return (
     <div style={{ minHeight:'100vh', background:'#F0EEFF', fontFamily:'system-ui, sans-serif', paddingBottom:'80px' }}>
       <div style={{ background:'#7C3AED', padding:'48px 24px 40px', textAlign:'center' }}>
-        <h1 style={{ fontSize:'28px', fontWeight:'800', color:'#fff', letterSpacing:'-1px', margin:'0 0 24px' }}>
-          celebra<span style={{ color:'#FFA500' }}>.</span>
-        </h1>
         <div style={{ width:'72px', height:'72px', borderRadius:'50%', background:'rgba(255,255,255,0.2)', border:'3px solid rgba(255,255,255,0.5)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 12px', fontSize:'24px', fontWeight:'700', color:'#fff' }}>
           {ini}
         </div>
@@ -68,7 +65,8 @@ export default function Perfil() {
 
             <div>
               <label style={{ display:'block', color:'#999', fontSize:'13px', marginBottom:'6px' }}>Fecha de cumpleaños</label>
-              <input type="date" value={form.birthday} onChange={e => setForm({...form, birthday:e.target.value})}
+              <input type="text" value={form.birthday} onChange={e => setForm({...form, birthday:e.target.value})}
+                placeholder="YYYY-MM-DD"
                 style={{ width:'100%', background:'#F0EEFF', border:'none', borderRadius:'12px', padding:'13px', fontSize:'15px', color:'#1a1a1a', boxSizing:'border-box', outline:'none' }} />
             </div>
           </div>
@@ -85,13 +83,20 @@ export default function Perfil() {
         </button>
       </div>
 
-      <div style={{ position:'fixed', bottom:0, left:0, right:0, background:'#fff', borderTop:'1px solid #E9D5FF', display:'flex', alignItems:'center', justifyContent:'space-around', padding:'12px 0 20px' }}>
-        <Link href="/dashboard" style={{ textDecoration:'none', textAlign:'center' }}><div style={{ fontSize:'22px' }}>🏠</div><p style={{ fontSize:'11px', color:'#999', margin:'2px 0 0' }}>Inicio</p></Link>
-        <Link href="/eventos" style={{ textDecoration:'none', textAlign:'center' }}><div style={{ fontSize:'22px' }}>📅</div><p style={{ fontSize:'11px', color:'#999', margin:'2px 0 0' }}>Eventos</p></Link>
-        <Link href="/eventos/nuevo" style={{ textDecoration:'none', textAlign:'center' }}><div style={{ width:'48px', height:'48px', background:'#7C3AED', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'-16px auto 0', fontSize:'24px', color:'#fff' }}>+</div></Link>
-        <Link href="/amigos" style={{ textDecoration:'none', textAlign:'center' }}><div style={{ fontSize:'22px' }}>🎂</div><p style={{ fontSize:'11px', color:'#999', margin:'2px 0 0' }}>Cumpleaños</p></Link>
-        <Link href="/perfil" style={{ textDecoration:'none', textAlign:'center' }}><div style={{ fontSize:'22px' }}>👤</div><p style={{ fontSize:'11px', color:'#7C3AED', fontWeight:'600', margin:'2px 0 0' }}>Perfil</p></Link>
-      </div>
+      <nav style={{ position:'fixed', bottom:0, left:0, right:0, background:'#fff', borderTop:'1px solid #E9D5FF', display:'flex', alignItems:'center', justifyContent:'space-around', padding:'12px 0 20px' }}>
+        <Link href="/dashboard" style={{ textDecoration:'none', textAlign:'center' }}>
+          <div style={{ fontSize:'22px' }}>🏠</div>
+          <p style={{ fontSize:'11px', color:'#999', margin:'2px 0 0' }}>Inicio</p>
+        </Link>
+        <Link href="/circulos" style={{ textDecoration:'none', textAlign:'center' }}>
+          <div style={{ fontSize:'22px' }}>👥</div>
+          <p style={{ fontSize:'11px', color:'#999', margin:'2px 0 0' }}>Círculos</p>
+        </Link>
+        <Link href="/perfil" style={{ textDecoration:'none', textAlign:'center' }}>
+          <div style={{ fontSize:'22px' }}>👤</div>
+          <p style={{ fontSize:'11px', color:'#7C3AED', fontWeight:'600', margin:'2px 0 0' }}>Perfil</p>
+        </Link>
+      </nav>
     </div>
   );
 }
