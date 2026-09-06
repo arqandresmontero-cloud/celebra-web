@@ -53,7 +53,6 @@ function NuevoEvento() {
   const [providers, setProviders] = useState([]);
   const [selectedProvider, setSelectedProvider] = useState(null);
   const [giftcardAmount, setGiftcardAmount] = useState('');
-  const [giftcardResult, setGiftcardResult] = useState(null);
   const [loadingProviders, setLoadingProviders] = useState(false);
 
   if (!getToken()) { router.replace('/login'); return null; }
@@ -76,17 +75,29 @@ function NuevoEvento() {
     setLoading(true);
     setError('');
     try {
+      const amount = Number(giftcardAmount);
+      const event = await api.createEvent({
+        honoree_name: form.honoree_name,
+        honoree_phone: form.honoree_phone || undefined,
+        birthday_date: new Date().toISOString().split('T')[0],
+        title: 'Giftcard de ' + selectedProvider.name + ' para ' + form.honoree_name,
+        type: 'individual',
+        target_amount: amount,
+      });
+      if (!event.collection_id) throw new Error('No se pudo crear la orden de pago');
       const token = localStorage.getItem('celebra_token');
-      const res = await fetch(API_URL + '/giftcard/purchase', {
+      const res = await fetch(API_URL + '/collections/' + event.collection_id + '/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-        body: JSON.stringify({ provider_id: selectedProvider.id, amount: Number(giftcardAmount), honoree_name: form.honoree_name, honoree_phone: form.honoree_phone })
+        body: JSON.stringify({ amount, giftcard_provider_id: selectedProvider.id })
       });
       const data = await res.json();
-      if (data.ok) setGiftcardResult(data);
-      else setError(data.error || 'Error al procesar');
-    } catch(e) { setError('Error de conexión'); }
-    setLoading(false);
+      if (!res.ok || !data.checkout_url) throw new Error(data.error || 'No se pudo iniciar el pago');
+      window.location.href = data.checkout_url;
+    } catch (err) {
+      setError(err.message || 'Error de conexión');
+      setLoading(false);
+    }
   };
 
   const handleNext = () => {
@@ -272,7 +283,7 @@ function NuevoEvento() {
           <div style={{ marginBottom: 0 }}>
             <label style={labelStyle}>Teléfono (WhatsApp)</label>
             <input type="text" value={form.honoree_phone} onChange={e => setForm({ ...form, honoree_phone: e.target.value })} placeholder="Ej: +5491112345678" style={inputStyle} />
-            <p style={{ fontSize: '12px', color: '#bbb', margin: '6px 0 0' }}>Opcional. Le mandamos el regalo directo por WhatsApp.</p>
+            <p style={{ fontSize: '12px', color: '#bbb', margin: '6px 0 0' }}>Opcional. Guardamos el contacto para coordinar la entrega una vez confirmado el pago.</p>
           </div>
         </div>
         <button onClick={handleNext} style={{ width: '100%', background: '#6B3FD4', color: '#fff', border: 'none', borderRadius: '14px', padding: '16px', fontSize: '16px', fontWeight: '500', cursor: 'pointer', letterSpacing: '-0.01em' }}>
@@ -283,26 +294,6 @@ function NuevoEvento() {
   );
 
   // Individual paso 2 — elegir tipo de regalo
-
-  // Pantalla resultado giftcard
-  if (giftcardResult) return (
-    <div style={{ minHeight: '100vh', background: '#F0EEFF', fontFamily: 'system-ui, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-      <div style={{ maxWidth: '420px', width: '100%', textAlign: 'center' }}>
-        <div style={{ fontSize: '64px', marginBottom: '16px' }}>🎉</div>
-        <h2 style={{ fontSize: '26px', fontWeight: '700', color: '#3B1FA8', marginBottom: '8px' }}>¡Giftcard enviada!</h2>
-        <p style={{ color: '#888', marginBottom: '24px' }}>Le enviaste una giftcard de <strong style={{ color: '#3B1FA8' }}>{giftcardResult.provider}</strong> a {giftcardResult.honoree_name}</p>
-        <div style={{ background: '#fff', borderRadius: '20px', padding: '28px', border: '0.5px solid rgba(0,0,0,0.06)', marginBottom: '24px' }}>
-          <p style={{ color: '#999', fontSize: '12px', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Código</p>
-          <p style={{ color: '#6B3FD4', fontSize: '24px', fontWeight: '800', letterSpacing: '3px', margin: '0 0 16px' }}>{giftcardResult.code}</p>
-          <p style={{ color: '#888', fontSize: '14px', margin: 0 }}>Monto: <strong>${Number(giftcardResult.amount).toLocaleString('es-AR')}</strong></p>
-        </div>
-        <button onClick={() => router.push('/dashboard')}
-          style={{ width: '100%', background: '#6B3FD4', color: '#fff', border: 'none', borderRadius: '14px', padding: '16px', fontSize: '16px', fontWeight: '600', cursor: 'pointer' }}>
-          Volver al inicio
-        </button>
-      </div>
-    </div>
-  );
 
   return (
     <div style={{ minHeight: '100vh', background: '#F0EEFF', fontFamily: 'system-ui, sans-serif', paddingBottom: '40px' }}>
@@ -349,7 +340,7 @@ function NuevoEvento() {
                         </div>
                         <button onClick={handleGiftcardPurchase} disabled={loading || !giftcardAmount}
                           style={{ width: '100%', background: loading || !giftcardAmount ? '#ccc' : '#6B3FD4', color: '#fff', border: 'none', borderRadius: '12px', padding: '14px', fontSize: '15px', fontWeight: '600', cursor: loading || !giftcardAmount ? 'not-allowed' : 'pointer' }}>
-                          {loading ? 'Procesando...' : 'Enviar giftcard 🎁'}
+                          {loading ? 'Redirigiendo...' : 'Ir a pagar 🎁'}
                         </button>
                       </>
                     )}
