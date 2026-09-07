@@ -35,16 +35,18 @@ export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [events, setEvents] = useState([]);
   const [suggested, setSuggested] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [suggestedToActivate, setSuggestedToActivate] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!getToken()) { router.replace('/login'); return; }
-    Promise.all([api.me(), api.getEvents(), api.getSuggestedEvents()])
-      .then(([u, e, s]) => { setUser(u); setEvents(e); setSuggested(s); })
+    Promise.all([api.me(), api.getEvents(), api.getSuggestedEvents(), api.getNotifications()])
+      .then(([u, e, s, n]) => { setUser(u); setEvents(e); setSuggested(s); setNotifications(n); })
       .catch(() => { removeToken(); router.replace('/login'); })
       .finally(() => setLoading(false));
-  }, []);
+  }, [router]);
 
   if (loading) return (
     <div style={{ minHeight: '100vh', background: '#F0EEFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui, sans-serif' }}>
@@ -74,9 +76,15 @@ export default function Dashboard() {
           <h1 style={{ fontSize: '30px', fontWeight: '700', color: '#fff', letterSpacing: '-1.5px', margin: 0, lineHeight: 1 }}>
             celebra<span style={{ color: '#F97316' }}>.</span>
           </h1>
-          <Link href="/perfil" style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.7)', fontSize: '11px', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
-            {user ? (user.name || user.email || '').slice(0, 2).toUpperCase() : 'AN'}
-          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button aria-label="Ver notificaciones" onClick={() => setShowNotifications(v => !v)} style={{ position:'relative', width:'32px', height:'32px', borderRadius:'50%', background:'rgba(255,255,255,0.1)', border:'1px solid rgba(255,255,255,0.12)', color:'#fff', cursor:'pointer', fontSize:'16px' }}>
+              🔔
+              {notifications.some(n => !n.read) && <span style={{ position:'absolute', top:'1px', right:'1px', width:'8px', height:'8px', borderRadius:'50%', background:'#F97316', border:'1px solid #6B3FD4' }} />}
+            </button>
+            <Link href="/perfil" style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.7)', fontSize: '11px', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
+              {user ? (user.name || user.email || '').slice(0, 2).toUpperCase() : 'AN'}
+            </Link>
+          </div>
         </div>
         <p style={{ color: 'rgba(255,255,255,0.62)', fontSize: '14px', margin: 0, letterSpacing: '-0.01em' }}>
           Regalar, por fin simple.
@@ -84,6 +92,25 @@ export default function Dashboard() {
       </div>
 
       <div style={{ padding: '16px' }}>
+
+        {showNotifications && (
+          <div style={{ background:'#fff', borderRadius:'16px', padding:'14px', marginBottom:'16px', boxShadow:'0 8px 24px rgba(59,31,168,0.12)' }}>
+            <p style={{ margin:'0 0 10px', fontSize:'13px', fontWeight:'600', color:'#3B1FA8' }}>Notificaciones</p>
+            {notifications.length === 0 ? (
+              <p style={{ margin:0, fontSize:'13px', color:'#999' }}>Todavía no tenés notificaciones.</p>
+            ) : notifications.slice(0, 8).map(n => {
+              const item = (
+                <div style={{ padding:'10px 0', borderTop:'1px solid #F1EEFF' }}>
+                  <p style={{ margin:'0 0 3px', fontSize:'13px', fontWeight:'600', color:'#26213A' }}>{n.title}</p>
+                  <p style={{ margin:0, fontSize:'12px', lineHeight:'1.4', color:'#777' }}>{n.body}</p>
+                </div>
+              );
+              return n.data?.circle_id
+                ? <Link key={n.id} href={'/circulos/' + n.data.circle_id} style={{ textDecoration:'none' }}>{item}</Link>
+                : <div key={n.id}>{item}</div>;
+            })}
+          </div>
+        )}
 
         {/* Dos botones principales */}
         <div style={{ display: 'flex', gap: '10px', marginBottom: '24px' }}>
