@@ -349,30 +349,6 @@ function NuevoEvento() {
               </div>
             )}
           </div>
-          <div style={{ background: '#fff', borderRadius: '20px', padding: '20px', border: giftMode === 'cash' ? '2px solid #6B3FD4' : '1.5px solid #EDE9FE' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: giftMode === 'cash' ? '16px' : '0', cursor: 'pointer' }}
-              onClick={() => { if (giftMode !== 'cash') setGiftMode('cash'); else setGiftMode(''); }}>
-              <div style={{ fontSize: '28px' }}>💸</div>
-              <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: '600', fontSize: '16px', margin: '0 0 2px', color: '#1a1a1a' }}>Monto en efectivo</p>
-                <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>Pagá por MercadoPago.</p>
-              </div>
-              <span style={{ fontSize: '18px', color: '#ccc' }}>{giftMode === 'cash' ? '▲' : '▼'}</span>
-            </div>
-            {giftMode === 'cash' && (
-              <div>
-                <div style={{ position: 'relative', marginBottom: '12px' }}>
-                  <span style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', color: '#888', fontSize: '16px' }}>$</span>
-                  <input type="number" value={individualAmount} onChange={e => setIndividualAmount(e.target.value)}
-                    placeholder="0" style={{ ...inputStyle, paddingLeft: '28px' }} />
-                </div>
-                <button onClick={handleSubmit} disabled={loading || !individualAmount}
-                  style={{ width: '100%', background: loading || !individualAmount ? '#ccc' : '#6B3FD4', color: '#fff', border: 'none', borderRadius: '12px', padding: '13px', fontSize: '15px', fontWeight: '500', cursor: loading || !individualAmount ? 'not-allowed' : 'pointer' }}>
-                  {loading ? 'Creando...' : 'Ir a pagar 🎁'}
-                </button>
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </div>

@@ -98,7 +98,7 @@ export default function Dashboard() {
             <div style={{ background: '#fff', borderRadius: '16px', padding: '18px 14px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', border: '1.5px solid #FFF4ED', cursor: 'pointer' }}>
               <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#FFF4ED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>🎁</div>
               <p style={{ fontWeight: '600', fontSize: '14px', color: '#92400e', margin: 0, textAlign: 'center', letterSpacing: '-0.01em' }}>Regalo individual</p>
-              <p style={{ fontSize: '11px', color: '#999', margin: 0, textAlign: 'center', lineHeight: '1.3' }}>Giftcard o efectivo</p>
+              <p style={{ fontSize: '11px', color: '#999', margin: 0, textAlign: 'center', lineHeight: '1.3' }}>Elegí una gift card</p>
             </div>
           </Link>
         </div>

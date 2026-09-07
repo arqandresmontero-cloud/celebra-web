@@ -97,6 +97,12 @@ export default function EventoDetalle() {
     window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
   };
 
+  const shareWithRecipient = () => {
+    const url = window.location.origin + '/gift/' + id + '?token=' + encodeURIComponent(event.redemption_token);
+    const text = event.honoree_name + ', este regalo es para vos 🎁 Elegí una o más gift cards con tu saldo: ' + url;
+    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+  };
+
   if (loading) return (
     <div style={{ minHeight: '100vh', background: '#F0EEFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui, sans-serif' }}>
       <p style={{ color: '#7C3AED' }}>Cargando...</p>
@@ -161,6 +167,12 @@ export default function EventoDetalle() {
               style={{ width: '100%', background: '#25D366', color: '#fff', border: 'none', borderRadius: '12px', padding: '14px', fontSize: '15px', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
               <span style={{ fontSize: '18px' }}>📲</span> Invitar por WhatsApp
             </button>
+            {event.redemption_token && (
+              <button onClick={shareWithRecipient}
+                style={{ width:'100%', background:'#fff', color:'#6B3FD4', border:'1px solid #DDD6FE', borderRadius:'12px', padding:'14px', fontSize:'15px', fontWeight:'600', cursor:'pointer', marginTop:'10px' }}>
+                🎁 Enviar regalo al destinatario
+              </button>
+            )}
             {event.collection_id && (
               <Link href={'/gift/' + id} target="_blank"
                 style={{ display: 'block', textAlign: 'center', color: '#7C3AED', fontSize: '13px', fontWeight: '500', marginTop: '10px', textDecoration: 'none' }}>

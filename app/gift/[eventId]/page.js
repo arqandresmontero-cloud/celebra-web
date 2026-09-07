@@ -1,212 +1,191 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 
-function formatAmount(n) {
-  if (!n) return '$0';
-  return '$' + Number(n).toLocaleString('es-AR');
-}
+const money = value => '$' + Number(value || 0).toLocaleString('es-AR');
+
+const statusLabel = {
+  requested: 'Solicitada',
+  processing: 'En preparación',
+  fulfilled: 'Emitida',
+  failed: 'Fallida',
+  cancelled: 'Cancelada',
+};
 
 export default function GiftPage() {
+  return <Suspense fallback={<Shell><p style={{ color:'#7C3AED' }}>Cargando regalo...</p></Shell>}><GiftPageContent /></Suspense>;
+}
+
+function GiftPageContent() {
   const { eventId } = useParams();
+  const searchParams = useSearchParams();
+  const redemptionToken = searchParams.get('token') || '';
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [step, setStep] = useState('info');
-  const [method, setMethod] = useState('');
   const [providerId, setProviderId] = useState('');
-  const [transferInfo, setTransferInfo] = useState('');
-  const [result, setResult] = useState(null);
+  const [amount, setAmount] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [redeeming, setRedeeming] = useState(false);
+  const [notice, setNotice] = useState('');
 
-  useEffect(() => {
-    api.getGift(eventId)
-      .then(setData)
-      .catch(() => setError('No se encontró el regalo.'))
-      .finally(() => setLoading(false));
-  }, [eventId]);
-
-  const handleRedeem = async () => {
-    if (!method) return setError('Elegí un método');
-    if (method === 'giftcard' && !providerId) return setError('Elegí una giftcard');
-    if (method === 'transfer' && !transferInfo) return setError('Ingresá tu CBU/alias');
-    setRedeeming(true);
-    setError('');
+  const loadGift = async () => {
     try {
-      const res = await api.redeemGift(eventId, { method, provider_id: providerId, transfer_info: transferInfo });
-      setResult(res);
-      setStep('done');
+      setData(await api.getGift(eventId, redemptionToken));
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'No se encontró el regalo.');
     } finally {
-      setRedeeming(false);
+      setLoading(false);
     }
   };
 
-  if (loading) return (
-    <div style={{ minHeight:'100vh', background:'#F0EEFF', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'system-ui, sans-serif' }}>
-      <p style={{ color:'#7C3AED' }}>Cargando...</p>
-    </div>
-  );
+  useEffect(() => {
+    api.getGift(eventId, redemptionToken)
+      .then(setData)
+      .catch(err => setError(err.message || 'No se encontró el regalo.'))
+      .finally(() => setLoading(false));
+  }, [eventId, redemptionToken]);
 
-  if (error && !data) return (
-    <div style={{ minHeight:'100vh', background:'#F0EEFF', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'system-ui, sans-serif' }}>
-      <p style={{ color:'#ef4444' }}>{error}</p>
-    </div>
-  );
+  const requestGiftcard = async () => {
+    const value = Number(amount);
+    if (!providerId) return setError('Elegí una gift card.');
+    if (!Number.isFinite(value) || value <= 0) return setError('Ingresá un monto válido.');
+    if (value > Number(data.available_balance)) return setError('El monto supera tu saldo disponible.');
+    setSubmitting(true);
+    setError('');
+    setNotice('');
+    try {
+      const result = await api.redeemGift(eventId, { provider_id: providerId, amount: value, redemption_token: redemptionToken });
+      setNotice(result.message);
+      setAmount('');
+      setProviderId('');
+      await loadGift();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-  const { event, contributions, providers } = data;
-  const collected = parseFloat(event.collected) || 0;
-  const target = parseFloat(event.target_amount) || 0;
-  const pct = target > 0 ? Math.min(100, Math.round((collected / target) * 100)) : 0;
+  const contribute = async () => {
+    const value = Number(amount);
+    if (!Number.isFinite(value) || value <= 0) return setError('Ingresá un monto válido.');
+    setSubmitting(true);
+    setError('');
+    try {
+      const result = await api.checkout(data.event.collection_id, value);
+      window.location.href = result.checkout_url;
+    } catch (err) {
+      setError(err.message === 'Token requerido' ? 'Ingresá a Celebra para realizar tu aporte.' : err.message);
+      setSubmitting(false);
+    }
+  };
 
-  if (step === 'done' && result) return (
-    <div style={{ minHeight:'100vh', background:'#F0EEFF', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px', fontFamily:'system-ui, sans-serif' }}>
-      <div style={{ maxWidth:'420px', width:'100%', textAlign:'center' }}>
-        <div style={{ fontSize:'64px', marginBottom:'16px' }}>🎉</div>
-        <h2 style={{ fontSize:'26px', fontWeight:'700', color:'#3B1FA8', marginBottom:'8px', letterSpacing:'-0.03em' }}>¡Regalo canjeado!</h2>
-        {result.method === 'giftcard' ? (
-          <div style={{ background:'#fff', borderRadius:'20px', padding:'28px', marginTop:'24px', border:'0.5px solid rgba(0,0,0,0.06)' }}>
-            <p style={{ color:'#888', marginBottom:'16px', fontSize:'15px' }}>Tu giftcard de <strong style={{ color:'#3B1FA8' }}>{result.provider}</strong></p>
-            <div style={{ background:'#F0EEFF', border:'2px dashed #7C3AED', borderRadius:'14px', padding:'20px', marginBottom:'16px' }}>
-              <p style={{ color:'#999', fontSize:'12px', marginBottom:'8px', textTransform:'uppercase', letterSpacing:'0.07em' }}>Tu código</p>
-              <p style={{ color:'#6B3FD4', fontSize:'24px', fontWeight:'800', letterSpacing:'3px', margin:0 }}>{result.code}</p>
-            </div>
-            <p style={{ color:'#888', fontSize:'14px' }}>Monto: <strong>{formatAmount(result.amount)}</strong></p>
-          </div>
-        ) : (
-          <div style={{ background:'#fff', borderRadius:'20px', padding:'28px', marginTop:'24px', border:'0.5px solid rgba(0,0,0,0.06)' }}>
-            <p style={{ color:'#888', marginBottom:'12px', fontSize:'15px' }}>Transferencia en camino a tu cuenta</p>
-            <p style={{ color:'#3B1FA8', fontSize:'32px', fontWeight:'700', letterSpacing:'-0.03em', margin:'0 0 8px' }}>{formatAmount(result.amount)}</p>
-            <p style={{ color:'#bbb', fontSize:'13px' }}>Comisión Celebra: {formatAmount(result.fee)}</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  if (loading) return <Shell><p style={{ color:'#7C3AED' }}>Cargando regalo...</p></Shell>;
+  if (!data) return <Shell><p style={{ color:'#dc2626' }}>{error}</p></Shell>;
+
+  const { event, contributions, providers, redemptions = [] } = data;
+  const collected = Number(event.collected || 0);
+  const available = Number(data.available_balance || 0);
+  const used = collected - available;
 
   return (
     <div style={{ minHeight:'100vh', background:'#F0EEFF', fontFamily:'system-ui, sans-serif', paddingBottom:'40px' }}>
+      <header style={{ background:'#6B3FD4', padding:'48px 24px 36px', textAlign:'center' }}>
+        <h1 style={{ fontSize:'28px', color:'#fff', margin:'0 0 24px' }}>celebra<span style={{ color:'#F97316' }}>.</span></h1>
+        <div style={{ fontSize:'52px' }}>🎁</div>
+        <h2 style={{ color:'#fff', fontSize:'22px', margin:'10px 0 6px' }}>{data.can_redeem ? 'Tu regalo grupal' : 'Regalo grupal para ' + event.honoree_name}</h2>
+        <p style={{ color:'rgba(255,255,255,.75)', margin:0 }}>{data.can_redeem ? event.honoree_name + ', elegí cómo usar tu saldo' : 'Sumate con el monto que quieras'}</p>
+      </header>
 
-      {/* Header */}
-      <div style={{ background:'#6B3FD4', padding:'48px 24px 40px', textAlign:'center' }}>
-        <h1 style={{ fontSize:'28px', fontWeight:'700', color:'#fff', letterSpacing:'-1.5px', margin:'0 0 32px' }}>
-          celebra<span style={{ color:'#F97316' }}>.</span>
-        </h1>
-        <div style={{ fontSize:'56px', marginBottom:'12px' }}>🎁</div>
-        <h2 style={{ fontSize:'22px', fontWeight:'700', color:'#fff', margin:'0 0 6px', letterSpacing:'-0.02em' }}>
-          ¡Tus amigos te regalaron!
-        </h2>
-        <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'15px', margin:0 }}>
-          {event.honoree_name}, este regalo es para vos
-        </p>
-      </div>
+      <main style={{ maxWidth:'520px', margin:'0 auto', padding:'20px 16px' }}>
+        <section style={card}>
+          <p style={eyebrow}>Saldo disponible</p>
+          <p style={{ color:'#3B1FA8', fontSize:'38px', fontWeight:800, margin:'0 0 6px' }}>{money(available)}</p>
+          <p style={{ color:'#888', fontSize:'13px', margin:0 }}>
+            Reunido: {money(collected)}{used > 0 ? ' · Canjeado o reservado: ' + money(used) : ''}
+          </p>
+        </section>
 
-      <div style={{ maxWidth:'500px', margin:'0 auto', padding:'24px 16px' }}>
+        {error && <div style={errorBox}>{error}</div>}
+        {notice && <div style={noticeBox}>{notice}</div>}
 
-        {/* Monto recolectado */}
-        <div style={{ background:'#fff', borderRadius:'20px', padding:'24px', marginBottom:'16px', border:'0.5px solid rgba(0,0,0,0.06)' }}>
-          <p style={{ fontSize:'11px', fontWeight:'500', color:'#888', letterSpacing:'0.07em', textTransform:'uppercase', margin:'0 0 16px' }}>Lo que juntaron</p>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline', marginBottom:'12px' }}>
-            <span style={{ fontSize:'36px', fontWeight:'700', color:'#3B1FA8', letterSpacing:'-0.03em' }}>{formatAmount(collected)}</span>
-            {target > 0 && <span style={{ fontSize:'13px', color:'#bbb' }}>meta {formatAmount(target)}</span>}
-          </div>
-          {target > 0 && (
-            <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-              <div style={{ flex:1, height:'6px', background:'#EDE9FE', borderRadius:'99px', overflow:'hidden' }}>
-                <div style={{ height:'100%', width: pct+'%', background:'#7C3AED', borderRadius:'99px' }} />
-              </div>
-              <span style={{ fontSize:'12px', fontWeight:'600', color:'#7C3AED' }}>{pct}%</span>
-            </div>
-          )}
-        </div>
-
-        {/* Participantes */}
-        {contributions.length > 0 && (
-          <div style={{ background:'#fff', borderRadius:'20px', padding:'24px', marginBottom:'16px', border:'0.5px solid rgba(0,0,0,0.06)' }}>
-            <p style={{ fontSize:'11px', fontWeight:'500', color:'#888', letterSpacing:'0.07em', textTransform:'uppercase', margin:'0 0 16px' }}>
-              Quiénes participaron ({contributions.length})
-            </p>
-            <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
-              {contributions.map((c, i) => (
-                <div key={i} style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-                    <div style={{ width:'32px', height:'32px', borderRadius:'50%', background:'#EDE9FE', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', fontWeight:'700', color:'#6B3FD4' }}>
-                      {(c.user_name || '?').slice(0,2).toUpperCase()}
-                    </div>
-                    <span style={{ fontSize:'15px', color:'#1a1a1a', fontWeight:'500' }}>{c.user_name}</span>
-                  </div>
-                  <span style={{ fontSize:'14px', color:'#7C3AED', fontWeight:'600' }}>{formatAmount(c.amount)}</span>
-                </div>
+        {data.can_redeem && available > 0 ? (
+          <section style={card}>
+            <p style={{ fontSize:'18px', fontWeight:700, margin:'0 0 6px' }}>Elegí una gift card</p>
+            <p style={{ color:'#888', fontSize:'14px', margin:'0 0 18px' }}>Podés hacer varios canjes hasta agotar tu saldo. Usar Celebra no reduce el valor de tu regalo.</p>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(2, minmax(0, 1fr))', gap:'8px', marginBottom:'18px' }}>
+              {providers.map(provider => (
+                <button key={provider.id} onClick={() => setProviderId(provider.id)}
+                  style={{ padding:'13px 10px', borderRadius:'12px', border:providerId===provider.id?'2px solid #6B3FD4':'1px solid #E5E7EB', background:providerId===provider.id?'#F0EEFF':'#fff', color:'#30205f', fontWeight:600, cursor:'pointer' }}>
+                  {provider.logo_url && <span>{provider.logo_url} </span>}{provider.name}
+                </button>
               ))}
             </div>
-          </div>
+            <label style={{ display:'block', color:'#777', fontSize:'13px', marginBottom:'6px' }}>Monto a canjear</label>
+            <input type="number" min="1" max={available} value={amount} onChange={e => setAmount(e.target.value)}
+              placeholder={'Hasta ' + money(available)}
+              style={{ width:'100%', boxSizing:'border-box', padding:'14px', border:'1px solid #DDD6FE', background:'#FAFAFF', borderRadius:'12px', fontSize:'16px', marginBottom:'12px' }} />
+            <button onClick={requestGiftcard} disabled={submitting || !providerId || !amount}
+              style={{ width:'100%', padding:'15px', border:0, borderRadius:'13px', background:submitting?'#bbb':'#6B3FD4', color:'#fff', fontSize:'16px', fontWeight:700, cursor:submitting?'wait':'pointer' }}>
+              {submitting ? 'Registrando...' : 'Solicitar gift card'}
+            </button>
+            <p style={{ color:'#999', fontSize:'12px', lineHeight:1.45, margin:'12px 0 0' }}>El comercio absorbe la comisión de Celebra. La solicitud queda reservada hasta que el comercio confirme la emisión.</p>
+          </section>
+        ) : data.can_redeem ? (
+          <section style={{ ...card, textAlign:'center' }}>
+            <div style={{ fontSize:'36px' }}>✨</div>
+            <p style={{ fontWeight:700 }}>No queda saldo disponible</p>
+            <p style={{ color:'#888', fontSize:'14px' }}>Podés consultar abajo el estado de tus gift cards.</p>
+          </section>
+        ) : (
+          <section style={card}>
+            <p style={{ fontSize:'18px', fontWeight:700, margin:'0 0 6px' }}>Hacé tu aporte</p>
+            <p style={{ color:'#888', fontSize:'14px', margin:'0 0 16px' }}>El destinatario podrá convertir el saldo reunido en una o varias gift cards.</p>
+            <input type="number" min="1" value={amount} onChange={e => setAmount(e.target.value)}
+              placeholder="Monto"
+              style={{ width:'100%', boxSizing:'border-box', padding:'14px', border:'1px solid #DDD6FE', background:'#FAFAFF', borderRadius:'12px', fontSize:'16px', marginBottom:'12px' }} />
+            <button onClick={contribute} disabled={submitting || !amount}
+              style={{ width:'100%', padding:'15px', border:0, borderRadius:'13px', background:submitting?'#bbb':'#6B3FD4', color:'#fff', fontSize:'16px', fontWeight:700 }}>
+              {submitting ? 'Redirigiendo...' : 'Aportar con Mercado Pago'}
+            </button>
+          </section>
         )}
 
-        {/* CTA o formulario canje */}
-        {step === 'info' && (
-          <button onClick={() => setStep('redeem')}
-            style={{ width:'100%', background:'#6B3FD4', color:'#fff', border:'none', borderRadius:'14px', padding:'18px', fontSize:'17px', fontWeight:'600', cursor:'pointer', letterSpacing:'-0.01em' }}>
-            Canjear mi regalo 🎉
-          </button>
-        )}
-
-        {step === 'redeem' && (
-          <div style={{ background:'#fff', borderRadius:'20px', padding:'24px', border:'0.5px solid rgba(0,0,0,0.06)' }}>
-            <p style={{ fontSize:'16px', fontWeight:'600', color:'#1a1a1a', margin:'0 0 20px', letterSpacing:'-0.01em' }}>¿Cómo querés recibirlo?</p>
-
-            {error && <div style={{ background:'#FFF0F0', border:'1px solid #ffcccc', borderRadius:'12px', padding:'12px', marginBottom:'16px', color:'#cc0000', fontSize:'14px' }}>{error}</div>}
-
-            <div style={{ display:'flex', gap:'10px', marginBottom:'20px' }}>
-              <button onClick={() => { setMethod('giftcard'); setTransferInfo(''); }}
-                style={{ flex:1, background: method==='giftcard' ? '#6B3FD4' : '#F0EEFF', color: method==='giftcard' ? '#fff' : '#6B3FD4', border:'none', borderRadius:'12px', padding:'14px', fontSize:'15px', fontWeight:'600', cursor:'pointer' }}>
-                🎁 Giftcard
-              </button>
-              <button onClick={() => { setMethod('transfer'); setProviderId(''); }}
-                style={{ flex:1, background: method==='transfer' ? '#6B3FD4' : '#F0EEFF', color: method==='transfer' ? '#fff' : '#6B3FD4', border:'none', borderRadius:'12px', padding:'14px', fontSize:'15px', fontWeight:'600', cursor:'pointer' }}>
-                💸 Transferencia
-              </button>
-            </div>
-
-            {method === 'giftcard' && providers && providers.length > 0 && (
-              <div style={{ marginBottom:'20px' }}>
-                <p style={{ color:'#999', fontSize:'13px', marginBottom:'10px' }}>Elegí la giftcard:</p>
-                <div style={{ display:'flex', flexDirection:'column', gap:'8px' }}>
-                  {providers.map(p => (
-                    <button key={p.id} onClick={() => setProviderId(p.id)}
-                      style={{ background: providerId===p.id ? '#F0EEFF':'#fafafa', border: providerId===p.id ? '2px solid #7C3AED':'1px solid #eee', borderRadius:'12px', padding:'14px 16px', color:'#1a1a1a', fontSize:'15px', fontWeight:'500', cursor:'pointer', textAlign:'left' }}>
-                      {p.name}
-                    </button>
-                  ))}
+        {redemptions.length > 0 && (
+          <section style={card}>
+            <p style={eyebrow}>Mis gift cards</p>
+            {redemptions.map(item => (
+              <div key={item.id} style={{ borderTop:'1px solid #F0EEFF', padding:'14px 0' }}>
+                <div style={{ display:'flex', justifyContent:'space-between', gap:'12px' }}>
+                  <strong>{item.logo_url} {item.provider}</strong>
+                  <strong style={{ color:'#6B3FD4' }}>{money(item.amount)}</strong>
                 </div>
+                <p style={{ color:'#888', fontSize:'13px', margin:'6px 0 0' }}>
+                  {statusLabel[item.status] || item.status}
+                </p>
+                {item.code && <p style={{ background:'#F0EEFF', padding:'10px', borderRadius:'9px', fontWeight:800, letterSpacing:'2px' }}>{item.code}</p>}
               </div>
-            )}
-
-            {method === 'giftcard' && (!providers || providers.length === 0) && (
-              <div style={{ background:'#F0EEFF', borderRadius:'12px', padding:'16px', marginBottom:'20px', textAlign:'center' }}>
-                <p style={{ color:'#7C3AED', fontSize:'14px', margin:0 }}>🎁 Giftcards disponibles próximamente</p>
-              </div>
-            )}
-
-            {method === 'transfer' && (
-              <div style={{ marginBottom:'20px' }}>
-                <label style={{ display:'block', color:'#999', fontSize:'13px', marginBottom:'6px' }}>Tu CBU o alias</label>
-                <input type="text" value={transferInfo} onChange={e => setTransferInfo(e.target.value)} placeholder="Ej: mi.alias.mp"
-                  style={{ width:'100%', background:'#F0EEFF', border:'none', borderRadius:'12px', padding:'13px', fontSize:'15px', color:'#1a1a1a', boxSizing:'border-box', outline:'none' }} />
-                <p style={{ color:'#bbb', fontSize:'12px', marginTop:'6px' }}>Se descuenta un 2% de comisión de plataforma.</p>
-              </div>
-            )}
-
-            {method && (
-              <button onClick={handleRedeem} disabled={redeeming}
-                style={{ width:'100%', background: redeeming ? '#ccc' : '#6B3FD4', color:'#fff', border:'none', borderRadius:'14px', padding:'16px', fontSize:'16px', fontWeight:'600', cursor: redeeming?'not-allowed':'pointer' }}>
-                {redeeming ? 'Procesando...' : 'Confirmar canje'}
-              </button>
-            )}
-          </div>
+            ))}
+          </section>
         )}
-      </div>
+
+        {contributions.length > 0 && (
+          <section style={card}>
+            <p style={eyebrow}>Participaron</p>
+            <p style={{ color:'#666', margin:0 }}>{contributions.map(c => c.user_name).join(', ')}</p>
+          </section>
+        )}
+      </main>
     </div>
   );
 }
+
+function Shell({ children }) {
+  return <div style={{ minHeight:'100vh', background:'#F0EEFF', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'system-ui, sans-serif' }}>{children}</div>;
+}
+
+const card = { background:'#fff', borderRadius:'20px', padding:'22px', marginBottom:'14px', border:'1px solid rgba(59,31,168,.07)' };
+const eyebrow = { color:'#888', fontSize:'11px', fontWeight:700, textTransform:'uppercase', letterSpacing:'.08em', margin:'0 0 12px' };
+const errorBox = { background:'#FFF0F0', border:'1px solid #fecaca', color:'#b91c1c', padding:'12px', borderRadius:'12px', marginBottom:'14px' };
+const noticeBox = { background:'#ECFDF5', border:'1px solid #a7f3d0', color:'#047857', padding:'12px', borderRadius:'12px', marginBottom:'14px' };
