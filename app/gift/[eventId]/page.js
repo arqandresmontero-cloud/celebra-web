@@ -88,14 +88,19 @@ function GiftPageContent() {
   const collected = Number(event.collected || 0);
   const available = Number(data.available_balance || 0);
   const used = collected - available;
+  const isIndividual = event.type === 'individual' || event.type === 'solo';
 
   return (
     <div style={{ minHeight:'100vh', background:'#F0EEFF', fontFamily:'system-ui, sans-serif', paddingBottom:'40px' }}>
       <header style={{ background:'#6B3FD4', padding:'48px 24px 36px', textAlign:'center' }}>
         <h1 style={{ fontSize:'28px', color:'#fff', margin:'0 0 24px' }}>celebra<span style={{ color:'#F97316' }}>.</span></h1>
         <div style={{ fontSize:'52px' }}>🎁</div>
-        <h2 style={{ color:'#fff', fontSize:'22px', margin:'10px 0 6px' }}>{data.can_redeem ? 'Tu regalo grupal' : 'Regalo grupal para ' + event.honoree_name}</h2>
-        <p style={{ color:'rgba(255,255,255,.75)', margin:0 }}>{data.can_redeem ? event.honoree_name + ', elegí cómo usar tu saldo' : 'Sumate con el monto que quieras'}</p>
+        <h2 style={{ color:'#fff', fontSize:'22px', margin:'10px 0 6px' }}>
+          {isIndividual ? 'Gift card para ' + event.honoree_name : (data.can_redeem ? 'Tu regalo grupal' : 'Regalo grupal para ' + event.honoree_name)}
+        </h2>
+        <p style={{ color:'rgba(255,255,255,.75)', margin:0 }}>
+          {isIndividual ? 'Consultá el estado de tu regalo' : (data.can_redeem ? event.honoree_name + ', elegí cómo usar tu saldo' : 'Sumate con el monto que quieras')}
+        </p>
       </header>
 
       <main style={{ maxWidth:'520px', margin:'0 auto', padding:'20px 16px' }}>
@@ -110,7 +115,16 @@ function GiftPageContent() {
         {error && <div style={errorBox}>{error}</div>}
         {notice && <div style={noticeBox}>{notice}</div>}
 
-        {data.can_redeem && available > 0 ? (
+        {isIndividual ? (
+          <section style={{ ...card, textAlign:'center' }}>
+            <p style={{ fontWeight:700, margin:'0 0 8px' }}>{data.can_redeem ? 'Estado de tu gift card' : 'Enlace de consulta'}</p>
+            <p style={{ color:'#888', fontSize:'14px', margin:0 }}>
+              {data.can_redeem
+                ? (redemptions.length ? 'Abajo podés consultar su emisión y el código cuando esté disponible.' : 'La gift card aparecerá cuando Mercado Pago confirme el pago.')
+                : 'El código solamente está disponible desde el enlace privado enviado al destinatario.'}
+            </p>
+          </section>
+        ) : data.can_redeem && available > 0 ? (
           <section style={card}>
             <p style={{ fontSize:'18px', fontWeight:700, margin:'0 0 6px' }}>Elegí una gift card</p>
             <p style={{ color:'#888', fontSize:'14px', margin:'0 0 18px' }}>Podés hacer varios canjes hasta agotar tu saldo. Usar Celebra no reduce el valor de tu regalo.</p>

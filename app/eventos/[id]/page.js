@@ -146,14 +146,20 @@ export default function EventoDetalle() {
           </div>
         )}
 
-        {event.type === 'solo' ? (
+        {event.type === 'solo' || event.type === 'individual' ? (
           <div style={{ background: '#fff', borderRadius: '20px', padding: '20px' }}>
             <p style={{ fontSize: '11px', fontWeight: '500', color: '#888', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: '10px', marginTop: 0 }}>
               Tu aporte
             </p>
             <p style={{ fontSize: '14px', color: '#555', margin: '0 0 14px', lineHeight: '1.4' }}>
-              Pagá con MercadoPago y el regalo queda registrado al instante.
+              La gift card se emite únicamente después de que Mercado Pago confirma el pago.
             </p>
+            {event.redemption_token && (
+              <button onClick={shareWithRecipient}
+                style={{ width:'100%', background:'#6B3FD4', color:'#fff', border:'none', borderRadius:'12px', padding:'14px', fontSize:'15px', fontWeight:'600', cursor:'pointer' }}>
+                🎁 Enviar gift card al destinatario
+              </button>
+            )}
           </div>
         ) : (
           <div style={{ background: '#fff', borderRadius: '20px', padding: '20px' }}>
