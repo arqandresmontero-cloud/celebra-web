@@ -97,13 +97,15 @@ export default function Circulos() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {circles.map(c => (
               <div key={c.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '16px' }}>
-                <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '80px', background: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '0 16px 16px 0' }}
-                  onClick={() => handleDelete(c.id)}>
-                  <span style={{ color: '#fff', fontSize: '13px', fontWeight: '600' }}>{deleting === c.id ? '...' : 'Borrar'}</span>
-                </div>
+                {c.role === 'admin' && (
+                  <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '80px', background: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '0 16px 16px 0', cursor:'pointer' }}
+                    onClick={() => handleDelete(c.id)}>
+                    <span style={{ color: '#fff', fontSize: '13px', fontWeight: '600' }}>{deleting === c.id ? '...' : 'Borrar'}</span>
+                  </div>
+                )}
                 <div
-                  onTouchStart={e => handleTouchStart(c.id, e)}
-                  onTouchEnd={e => handleTouchEnd(c.id, e)}
+                  onTouchStart={e => { if (c.role === 'admin') handleTouchStart(c.id, e); }}
+                  onTouchEnd={e => { if (c.role === 'admin') handleTouchEnd(c.id, e); }}
                   style={{ transform: `translateX(${swipeX[c.id] || 0}px)`, transition: 'transform 0.2s', position: 'relative', zIndex: 1 }}
                   onClick={() => { if (!swipeX[c.id]) router.push('/circulos/' + c.id); else setSwipeX(prev => ({ ...prev, [c.id]: 0 })); }}
                 >
@@ -120,6 +122,16 @@ export default function Circulos() {
                     <span style={{ fontSize: '10px', fontWeight: '500', color: c.role === 'admin' ? '#6D28D9' : '#aaa', background: c.role === 'admin' ? '#EDE9FE' : '#f5f5f5', padding: '3px 8px', borderRadius: '6px' }}>
                       {c.role === 'admin' ? 'Admin' : 'Miembro'}
                     </span>
+                    {c.role === 'admin' && (
+                      <button
+                        aria-label={'Borrar círculo ' + c.name}
+                        title="Borrar círculo"
+                        disabled={deleting === c.id}
+                        onClick={e => { e.stopPropagation(); handleDelete(c.id); }}
+                        style={{ width:'34px', height:'34px', borderRadius:'9px', border:'1px solid #fecaca', background:'#fff5f5', color:'#dc2626', display:'flex', alignItems:'center', justifyContent:'center', cursor:deleting === c.id ? 'wait' : 'pointer', fontSize:'16px', flexShrink:0 }}>
+                        {deleting === c.id ? '…' : '🗑'}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
