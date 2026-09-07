@@ -3,60 +3,65 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { api, getToken } from '@/lib/api';
 
+const pendingJoins = new Map();
+
+function joinCircleOnce(inviteCode) {
+  if (!pendingJoins.has(inviteCode)) {
+    const request = api.joinCircle(inviteCode)
+      .finally(() => pendingJoins.delete(inviteCode));
+    pendingJoins.set(inviteCode, request);
+  }
+  return pendingJoins.get(inviteCode);
+}
+
 export default function JoinCirculo() {
   const router = useRouter();
   const { invite_code } = useParams();
-  const [status, setStatus] = useState('loading'); // loading | joining | success | error | needsLogin
+  const [status, setStatus] = useState('joining');
   const [circleName, setCircleName] = useState('');
   const [error, setError] = useState('');
+  const needsProfile = error.includes('Completá tu teléfono');
 
   useEffect(() => {
+    if (!invite_code) return;
+
     if (!getToken()) {
-      setStatus('needsLogin');
+      const redirect = `/circulos/join/${invite_code}`;
+      router.replace(`/login?redirect=${encodeURIComponent(redirect)}`);
       return;
     }
-    handleJoin();
-  }, []);
 
-  const handleJoin = async () => {
-    setStatus('joining');
-    try {
-      const circle = await api.joinCircle(invite_code);
-      setCircleName(circle.name);
-      setStatus('success');
-      setTimeout(() => router.replace('/circulos/' + circle.id), 2000);
-    } catch (e) {
-      setError(e.message || 'Error al unirse al círculo');
-      setStatus('error');
-    }
-  };
+    let active = true;
+    let redirectTimer;
 
-  if (status === 'loading' || status === 'joining') return (
+    const joinCircle = async () => {
+      try {
+        const circle = await joinCircleOnce(invite_code);
+        if (!active) return;
+        setCircleName(circle.name);
+        setStatus('success');
+        redirectTimer = window.setTimeout(() => {
+          router.replace('/circulos/' + circle.id);
+        }, 2000);
+      } catch (err) {
+        if (!active) return;
+        setError(err.message || 'Error al unirse al círculo');
+        setStatus('error');
+      }
+    };
+
+    joinCircle();
+
+    return () => {
+      active = false;
+      if (redirectTimer) window.clearTimeout(redirectTimer);
+    };
+  }, [invite_code, router]);
+
+  if (status === 'joining') return (
     <div style={{ minHeight: '100vh', background: '#F0EEFF', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui, sans-serif', padding: '24px' }}>
       <div style={{ fontSize: '48px', marginBottom: '16px' }}>👥</div>
       <p style={{ color: '#7C3AED', fontSize: '16px', fontWeight: '500' }}>Uniéndote al círculo...</p>
-    </div>
-  );
-
-  if (status === 'needsLogin') return (
-    <div style={{ minHeight: '100vh', background: '#F0EEFF', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui, sans-serif', padding: '24px' }}>
-      <div style={{ background: '#fff', borderRadius: '24px', padding: '32px 24px', maxWidth: '360px', width: '100%', textAlign: 'center', boxShadow: '0 4px 24px rgba(109,40,217,0.08)' }}>
-        <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎉</div>
-        <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#1a1a1a', letterSpacing: '-0.5px', margin: '0 0 8px' }}>Te invitaron a un círculo</h1>
-        <p style={{ fontSize: '14px', color: '#888', margin: '0 0 24px', lineHeight: '1.5' }}>
-          Iniciá sesión o creá una cuenta para unirte y organizar regalos grupales.
-        </p>
-        <button
-          onClick={() => router.push('/login?redirect=/circulos/join/' + invite_code)}
-          style={{ width: '100%', background: '#7C3AED', color: '#fff', border: 'none', borderRadius: '14px', padding: '16px', fontSize: '16px', fontWeight: '500', cursor: 'pointer', marginBottom: '10px' }}>
-          Iniciar sesión
-        </button>
-        <button
-          onClick={() => router.push('/register?redirect=/circulos/join/' + invite_code)}
-          style={{ width: '100%', background: '#F5F3FF', color: '#7C3AED', border: 'none', borderRadius: '14px', padding: '16px', fontSize: '16px', fontWeight: '500', cursor: 'pointer' }}>
-          Crear cuenta
-        </button>
-      </div>
     </div>
   );
 
@@ -76,12 +81,12 @@ export default function JoinCirculo() {
     <div style={{ minHeight: '100vh', background: '#F0EEFF', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui, sans-serif', padding: '24px' }}>
       <div style={{ background: '#fff', borderRadius: '24px', padding: '32px 24px', maxWidth: '360px', width: '100%', textAlign: 'center', boxShadow: '0 4px 24px rgba(109,40,217,0.08)' }}>
         <div style={{ fontSize: '48px', marginBottom: '16px' }}>😕</div>
-        <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#1a1a1a', letterSpacing: '-0.5px', margin: '0 0 8px' }}>Link inválido</h1>
+        <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#1a1a1a', letterSpacing: '-0.5px', margin: '0 0 8px' }}>{needsProfile ? 'Completá tu perfil' : 'Link inválido'}</h1>
         <p style={{ fontSize: '14px', color: '#888', margin: '0 0 24px' }}>{error}</p>
         <button
-          onClick={() => router.replace('/circulos')}
+          onClick={() => router.replace(needsProfile ? '/perfil' : '/circulos')}
           style={{ width: '100%', background: '#7C3AED', color: '#fff', border: 'none', borderRadius: '14px', padding: '16px', fontSize: '16px', fontWeight: '500', cursor: 'pointer' }}>
-          Ir a Círculos
+          {needsProfile ? 'Ir a Perfil' : 'Ir a Círculos'}
         </button>
       </div>
     </div>

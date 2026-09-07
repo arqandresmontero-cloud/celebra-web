@@ -6,7 +6,7 @@ import { api, setToken } from '@/lib/api';
 
 export default function Register() {
   const router = useRouter();
-  const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', birthday: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -15,7 +15,7 @@ export default function Register() {
     setLoading(true);
     setError('');
     try {
-      const { token } = await api.register(form.email, form.password, form.name);
+      const { token } = await api.register(form);
       setToken(token);
       router.push('/dashboard');
     } catch (err) {
@@ -53,6 +53,29 @@ export default function Register() {
               required
               style={{ width: '100%', background: '#111', border: '1px solid #333', borderRadius: '8px', padding: '12px', color: '#fff', fontSize: '15px', boxSizing: 'border-box' }}
               placeholder="Tu nombre"
+            />
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', color: '#888', fontSize: '14px', marginBottom: '6px' }}>Teléfono con código de país</label>
+            <input
+              type="tel"
+              value={form.phone}
+              onChange={e => setForm({ ...form, phone: e.target.value })}
+              required
+              style={{ width: '100%', background: '#111', border: '1px solid #333', borderRadius: '8px', padding: '12px', color: '#fff', fontSize: '15px', boxSizing: 'border-box' }}
+              placeholder="Ej: 5492281633229"
+            />
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', color: '#888', fontSize: '14px', marginBottom: '6px' }}>Fecha de cumpleaños</label>
+            <input
+              type="date"
+              value={form.birthday}
+              onChange={e => setForm({ ...form, birthday: e.target.value })}
+              required
+              style={{ width: '100%', background: '#111', border: '1px solid #333', borderRadius: '8px', padding: '12px', color: '#fff', fontSize: '15px', boxSizing: 'border-box', colorScheme:'dark' }}
             />
           </div>
 

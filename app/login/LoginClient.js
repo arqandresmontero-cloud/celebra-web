@@ -1,12 +1,13 @@
 'use client';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { api, setToken } from '@/lib/api';
 
 export default function Login() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [tab, setTab] = useState('login');
-  const [form, setForm] = useState({ name:'', email:'', password:'' });
+  const [form, setForm] = useState({ name:'', email:'', phone:'', birthday:'', password:'' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -15,9 +16,13 @@ export default function Login() {
     try {
       const { token } = tab === 'login'
         ? await api.login(form.email, form.password)
-        : await api.register(form.email, form.password, form.name);
+        : await api.register(form);
       setToken(token);
-      router.push('/dashboard');
+      const redirect = searchParams.get('redirect');
+      const destination = redirect?.startsWith('/') && !redirect.startsWith('//')
+        ? redirect
+        : '/dashboard';
+      router.replace(destination);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -48,10 +53,21 @@ export default function Login() {
         {error && <div style={{ background:'#FFF0F0', border:'1px solid #ffcccc', borderRadius:'10px', padding:'12px', marginBottom:'16px', color:'#cc0000', fontSize:'14px' }}>{error}</div>}
 
         {tab === 'register' && (
-          <div style={{ marginBottom:'14px' }}>
-            <input type="text" value={form.name} onChange={e => setForm({...form, name:e.target.value})} placeholder="Tu nombre"
-              style={{ width:'100%', background:'#F0EEFF', border:'none', borderRadius:'12px', padding:'14px', fontSize:'15px', color:'#1a1a1a', boxSizing:'border-box', outline:'none' }} />
-          </div>
+          <>
+            <div style={{ marginBottom:'14px' }}>
+              <input type="text" value={form.name} onChange={e => setForm({...form, name:e.target.value})} placeholder="Tu nombre"
+                style={{ width:'100%', background:'#F0EEFF', border:'none', borderRadius:'12px', padding:'14px', fontSize:'15px', color:'#1a1a1a', boxSizing:'border-box', outline:'none' }} />
+            </div>
+            <div style={{ marginBottom:'14px' }}>
+              <input type="tel" value={form.phone} onChange={e => setForm({...form, phone:e.target.value})} placeholder="Teléfono con código de país"
+                style={{ width:'100%', background:'#F0EEFF', border:'none', borderRadius:'12px', padding:'14px', fontSize:'15px', color:'#1a1a1a', boxSizing:'border-box', outline:'none' }} />
+            </div>
+            <div style={{ marginBottom:'14px' }}>
+              <input type="date" value={form.birthday} onChange={e => setForm({...form, birthday:e.target.value})}
+                aria-label="Fecha de cumpleaños"
+                style={{ width:'100%', background:'#F0EEFF', border:'none', borderRadius:'12px', padding:'14px', fontSize:'15px', color:'#1a1a1a', boxSizing:'border-box', outline:'none' }} />
+            </div>
+          </>
         )}
 
         <div style={{ marginBottom:'14px' }}>

@@ -30,11 +30,6 @@ export default function CirculoDetalle() {
   const [circle, setCircle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showAddPerson, setShowAddPerson] = useState(false);
-  const [form, setForm] = useState({ name: '', dia: '', mes: '', phone: '', note: '', emoji: '🎂' });
-  const [saving, setSaving] = useState(false);
-
-  const EMOJIS = ['🎂', '👦', '👧', '👨', '👩', '🧒', '👴', '👵'];
-  const DIAS = Array.from({ length: 31 }, (_, i) => i + 1);
 
   useEffect(() => {
     if (!getToken()) { router.replace('/login'); return; }
@@ -42,26 +37,7 @@ export default function CirculoDetalle() {
       .then(setCircle)
       .catch(() => { removeToken(); router.replace('/login'); })
       .finally(() => setLoading(false));
-  }, [id]);
-
-  const handleAddPerson = async () => {
-    if (!form.name.trim()) return;
-    setSaving(true);
-    try {
-      // Armamos fecha como 2000-MM-DD (año fijo, solo importa día/mes)
-      const birthday_date = form.dia && form.mes
-        ? `2000-${String(form.mes).padStart(2, '0')}-${String(form.dia).padStart(2, '0')}`
-        : null;
-      const person = await api.addPersonToCircle(id, { ...form, birthday_date });
-      setCircle(prev => ({ ...prev, people: [...(prev.people || []), person] }));
-      setShowAddPerson(false);
-      setForm({ name: '', dia: '', mes: '', phone: '', note: '', emoji: '🎂' });
-    } catch (e) {
-      alert('Error al agregar persona');
-    } finally {
-      setSaving(false);
-    }
-  };
+  }, [id, router]);
 
   const handleInvite = () => {
     const url = `${window.location.origin}/circulos/join/${circle.invite_code}`;
@@ -126,10 +102,7 @@ export default function CirculoDetalle() {
         {/* Acciones */}
         <div style={{ display: 'flex', gap: '10px' }}>
           <button onClick={() => setShowAddPerson(true)} style={{ flex: 1, background: '#fff', color: '#5B21B6', border: 'none', borderRadius: '14px', padding: '14px', fontSize: '14px', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-            🎂 Cargar cumpleaños
-          </button>
-          <button onClick={handleInvite} style={{ flex: 1, background: '#25D366', color: '#fff', border: 'none', borderRadius: '14px', padding: '14px', fontSize: '14px', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-            Invitar por WhatsApp
+            👤 Agregar integrante
           </button>
         </div>
 
@@ -151,7 +124,7 @@ export default function CirculoDetalle() {
             <div style={{ background: '#fff', borderRadius: '16px', padding: '32px', textAlign: 'center', border: '1px dashed #DDD6FE' }}>
               <p style={{ fontSize: '28px', margin: '0 0 10px' }}>🎂</p>
               <p style={{ color: '#aaa', fontSize: '14px', lineHeight: '1.5', margin: 0 }}>
-                Todavía no hay cumpleaños cargados.<br />Tocá "Cargar cumpleaños" para empezar.
+                Todavía no hay cumpleaños cargados.<br />Agregá integrantes para completar el calendario.
               </p>
             </div>
           ) : (
@@ -217,70 +190,22 @@ export default function CirculoDetalle() {
         </Link>
       </div>
 
-      {/* Sheet — Agregar persona */}
+      {/* Sheet — Agregar integrante */}
       {showAddPerson && (
         <div onClick={() => setShowAddPerson(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(30,10,60,0.45)', zIndex: 100, display: 'flex', alignItems: 'flex-end' }}>
-          <div onClick={e => e.stopPropagation()} style={{ width: '100%', background: '#fff', borderRadius: '24px 24px 0 0', padding: '0 16px 40px', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', background: '#fff', borderRadius: '24px 24px 0 0', padding: '0 16px 40px' }}>
             <div style={{ width: '36px', height: '4px', background: '#E5E7EB', borderRadius: '99px', margin: '12px auto 20px' }} />
-            <h2 style={{ fontSize: '18px', fontWeight: '500', color: '#1a1a1a', letterSpacing: '-0.02em', margin: '0 0 20px' }}>Cargar cumpleaños</h2>
-
-            <p style={{ fontSize: '12px', color: '#888', margin: '0 0 8px' }}>Ícono</p>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-              {EMOJIS.map(em => (
-                <button key={em} onClick={() => setForm({ ...form, emoji: em })}
-                  style={{ width: '40px', height: '40px', borderRadius: '10px', border: form.emoji === em ? '2px solid #7C3AED' : '1.5px solid #e5e7eb', background: form.emoji === em ? '#EDE9FE' : '#fff', fontSize: '20px', cursor: 'pointer' }}>
-                  {em}
-                </button>
-              ))}
-            </div>
-
-            <p style={{ fontSize: '12px', color: '#888', margin: '0 0 6px' }}>Nombre *</p>
-            <input
-              value={form.name}
-              onChange={e => setForm({ ...form, name: e.target.value })}
-              placeholder="Ej: Sofía"
-              style={{ width: '100%', border: '1.5px solid #e5e7eb', borderRadius: '12px', padding: '12px 14px', fontSize: '15px', marginBottom: '12px', outline: 'none', boxSizing: 'border-box' }}
-            />
-
-            <p style={{ fontSize: '12px', color: '#888', margin: '0 0 6px' }}>Fecha de cumpleaños</p>
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
-              <select
-                value={form.dia}
-                onChange={e => setForm({ ...form, dia: e.target.value })}
-                style={{ flex: 1, border: '1.5px solid #e5e7eb', borderRadius: '12px', padding: '12px 14px', fontSize: '15px', outline: 'none', background: '#fff', color: form.dia ? '#1a1a1a' : '#aaa' }}>
-                <option value="">Día</option>
-                {DIAS.map(d => <option key={d} value={d}>{d}</option>)}
-              </select>
-              <select
-                value={form.mes}
-                onChange={e => setForm({ ...form, mes: e.target.value })}
-                style={{ flex: 2, border: '1.5px solid #e5e7eb', borderRadius: '12px', padding: '12px 14px', fontSize: '15px', outline: 'none', background: '#fff', color: form.mes ? '#1a1a1a' : '#aaa' }}>
-                <option value="">Mes</option>
-                {MESES.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
-              </select>
-            </div>
-
-            <p style={{ fontSize: '12px', color: '#888', margin: '0 0 6px' }}>Teléfono del adulto/responsable (opcional)</p>
-            <input
-              value={form.phone}
-              onChange={e => setForm({ ...form, phone: e.target.value })}
-              placeholder="Ej: 11 1234-5678"
-              style={{ width: '100%', border: '1.5px solid #e5e7eb', borderRadius: '12px', padding: '12px 14px', fontSize: '15px', marginBottom: '12px', outline: 'none', boxSizing: 'border-box' }}
-            />
-
-            <p style={{ fontSize: '12px', color: '#888', margin: '0 0 6px' }}>Nota (opcional)</p>
-            <input
-              value={form.note}
-              onChange={e => setForm({ ...form, note: e.target.value })}
-              placeholder="Ej: Alérgico al maní"
-              style={{ width: '100%', border: '1.5px solid #e5e7eb', borderRadius: '12px', padding: '12px 14px', fontSize: '15px', marginBottom: '20px', outline: 'none', boxSizing: 'border-box' }}
-            />
-
-            <button
-              onClick={handleAddPerson}
-              disabled={saving || !form.name.trim()}
-              style={{ width: '100%', background: saving || !form.name.trim() ? '#c4b5fd' : '#7C3AED', color: '#fff', border: 'none', borderRadius: '14px', padding: '16px', fontSize: '16px', fontWeight: '500', cursor: saving || !form.name.trim() ? 'not-allowed' : 'pointer' }}>
-              {saving ? 'Guardando...' : 'Guardar'}
+            <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#1a1a1a', letterSpacing: '-0.02em', margin: '0 0 8px' }}>Agregar integrante</h2>
+            <p style={{ fontSize:'14px', color:'#777', lineHeight:'1.5', margin:'0 0 20px' }}>
+              Compartí la invitación. Cuando la persona ingrese, su nombre y cumpleaños se agregarán automáticamente desde su perfil.
+            </p>
+            <button onClick={handleInvite}
+              style={{ width:'100%', background:'#25D366', color:'#fff', border:'none', borderRadius:'14px', padding:'15px', fontSize:'15px', fontWeight:'600', cursor:'pointer', marginBottom:'10px' }}>
+              Invitar por WhatsApp
+            </button>
+            <button onClick={handleCopyLink}
+              style={{ width:'100%', background:'#EDE9FE', color:'#6D28D9', border:'none', borderRadius:'14px', padding:'15px', fontSize:'15px', fontWeight:'600', cursor:'pointer' }}>
+              Copiar enlace de invitación
             </button>
           </div>
         </div>

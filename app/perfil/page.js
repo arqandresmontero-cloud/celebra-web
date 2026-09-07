@@ -7,7 +7,7 @@ import { api, getToken, removeToken } from '@/lib/api';
 export default function Perfil() {
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [form, setForm] = useState({ name:'', birthday:'' });
+  const [form, setForm] = useState({ name:'', phone:'', birthday:'' });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -16,10 +16,10 @@ export default function Perfil() {
   useEffect(() => {
     if (!getToken()) { router.replace('/login'); return; }
     api.me()
-      .then(u => { setUser(u); setForm({ name: u.name || '', birthday: u.birthday || '' }); })
+      .then(u => { setUser(u); setForm({ name: u.name || '', phone: u.phone || '', birthday: u.birthday || '' }); })
       .catch(() => { removeToken(); router.replace('/login'); })
       .finally(() => setLoading(false));
-  }, []);
+  }, [router]);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -63,10 +63,16 @@ export default function Perfil() {
                 style={{ width:'100%', background:'#F0EEFF', border:'none', borderRadius:'12px', padding:'13px', fontSize:'15px', color:'#1a1a1a', boxSizing:'border-box', outline:'none' }} />
             </div>
 
+            <div style={{ marginBottom:'14px' }}>
+              <label style={{ display:'block', color:'#999', fontSize:'13px', marginBottom:'6px' }}>Teléfono con código de país</label>
+              <input type="tel" required value={form.phone} onChange={e => setForm({...form, phone:e.target.value})}
+                placeholder="Ej: 5492281633229"
+                style={{ width:'100%', background:'#F0EEFF', border:'none', borderRadius:'12px', padding:'13px', fontSize:'15px', color:'#1a1a1a', boxSizing:'border-box', outline:'none' }} />
+            </div>
+
             <div>
               <label style={{ display:'block', color:'#999', fontSize:'13px', marginBottom:'6px' }}>Fecha de cumpleaños</label>
-              <input type="text" value={form.birthday} onChange={e => setForm({...form, birthday:e.target.value})}
-                placeholder="YYYY-MM-DD"
+              <input type="date" required value={form.birthday} onChange={e => setForm({...form, birthday:e.target.value})}
                 style={{ width:'100%', background:'#F0EEFF', border:'none', borderRadius:'12px', padding:'13px', fontSize:'15px', color:'#1a1a1a', boxSizing:'border-box', outline:'none' }} />
             </div>
           </div>
